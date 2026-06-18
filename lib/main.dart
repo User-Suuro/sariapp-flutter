@@ -42,29 +42,14 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // We define the pages inside the build method so they can access _counter
     final List<Widget> pages = <Widget>[
-      // Index 0: Your original counter screen
-      Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[const Text('Home Page')],
-        ),
-      ),
-      // Index 1: A placeholder Settings screen
-      const Center(
-        child: Text(
-          'Settings Page',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-      ),
-      // Index 2: A placeholder Profile screen
-      const Center(
-        child: Text(
-          'Profile Page',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-      ),
+      const Center(child: Text('Home Page')),
+
+      const Center(child: Text('Products Page')),
+
+      const Center(child: Text('Checkout Page')),
+
+      const Center(child: Text('Settings Page')),
     ];
 
     return Scaffold(
@@ -79,15 +64,21 @@ class _MyHomePageState extends State<MyHomePage> {
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.shelves), label: 'Products'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.barcode_reader),
+            label: 'Checkout',
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
             label: 'Settings',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.deepPurple,
+        selectedItemColor: Colors.black,
+        unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
+        showUnselectedLabels: true,
       ),
     );
   }
