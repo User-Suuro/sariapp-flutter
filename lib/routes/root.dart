@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  WidgetsApp.debugAllowBannerOverride = false;
-  runApp(const MyApp());
-}
+import 'dashboard/dashboard.dart';
+import 'products/products.dart';
+import 'checkout/checkout.dart';
+import 'settings/settings.dart';
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class Root extends StatelessWidget {
+  const Root({super.key});
 
   // This widget is the root of your application.
   @override
@@ -43,13 +43,10 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = <Widget>[
-      const Center(child: Text('Home Page')),
-
-      const Center(child: Text('Products Page')),
-
-      const Center(child: Text('Checkout Page')),
-
-      const Center(child: Text('Settings Page')),
+      const DashboardPage(),
+      const ProductsPage(),
+      const CheckoutPage(),
+      const SettingsPage(),
     ];
 
     return Scaffold(
@@ -60,10 +57,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
       body: pages[_selectedIndex],
 
-      // Add the BottomNavigationBar here
+      //BottomNavigationBar
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.shelves), label: 'Products'),
           BottomNavigationBarItem(
             icon: Icon(Icons.barcode_reader),
@@ -79,6 +79,7 @@ class _MyHomePageState extends State<MyHomePage> {
         unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
         showUnselectedLabels: true,
+        type: BottomNavigationBarType.fixed,
       ),
     );
   }
