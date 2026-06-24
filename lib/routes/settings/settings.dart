@@ -8,159 +8,177 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9F9),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFF9F9F9),
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        title: Text(
+          'SETTINGS',
+          style: GoogleFonts.inter(
+            color: Colors.black,
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.2,
+          ),
+        ),
+      ),
       body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image Banner
-            Container(
-              height: 240,
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: NetworkImage('https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=800'), // Placeholder for store front
-                  fit: BoxFit.cover,
-                  colorFilter: ColorFilter.mode(Colors.black26, BlendMode.darken),
-                ),
-              ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.all(32.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'WELCOME TO SARIAPP',
-                    style: GoogleFonts.inter(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.black,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Let's set up your store to get started.",
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 48),
-
-                  // Store Name Input
-                  Text(
-                    'ENTER STORE NAME',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: "e.g. Maria's Variety Store",
-                        hintStyle: GoogleFonts.inter(
-                          color: Colors.grey.shade400,
-                          fontSize: 14,
-                        ),
-                        border: InputBorder.none,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'REQUIRED FIELD',
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.grey.shade400,
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-
-                  // Information Box
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.grey.shade300,
-                        style: BorderStyle.none, // Custom dashed border would need a painter, using simple border for now
-                      ),
-                    ),
-                    // Adding a simple representation of dashed border with background pattern or just a lighter border
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.info_outline, color: Colors.black, size: 20),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Your store name will appear on all your digital receipts and inventory reports.',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.grey.shade700,
-                              height: 1.5,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 60),
-
-                  // Action Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFEEEEEE),
-                        foregroundColor: Colors.black,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'CONTINUE',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.arrow_forward, size: 18),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            _buildUserCard(),
+            const SizedBox(height: 32),
+            
+            _buildSectionHeader('Store Configuration'),
+            _buildSettingsGroup([
+              _buildSettingItem(Icons.storefront_outlined, 'Store Profile', 'Business name, address, tax ID'),
+              _buildSettingItem(Icons.inventory_2_outlined, 'Inventory Settings', 'Thresholds, categories, units'),
+              _buildSettingItem(Icons.receipt_long_outlined, 'Tax & Receipts', 'VAT, service fee, receipt footer'),
+            ]),
+            
+            const SizedBox(height: 24),
+            _buildSectionHeader('Preferences'),
+            _buildSettingsGroup([
+              _buildSettingItem(Icons.notifications_none_outlined, 'Notifications', 'Sales alerts, stock warnings'),
+              _buildSettingItem(Icons.language_outlined, 'Language & Region', 'English, PHP (₱)'),
+              _buildSettingItem(Icons.dark_mode_outlined, 'Appearance', 'Light Mode'),
+            ]),
+            
+            const SizedBox(height: 24),
+            _buildSectionHeader('Support & Legal'),
+            _buildSettingsGroup([
+              _buildSettingItem(Icons.help_outline_rounded, 'Help Center', 'Guides, FAQs, contact support'),
+              _buildSettingItem(Icons.info_outline_rounded, 'Terms & Privacy', 'Our legal policies'),
+            ]),
+            
+            const SizedBox(height: 48),
+            _buildBranding(),
+            const SizedBox(height: 40),
           ],
         ),
       ),
     );
   }
+
+  Widget _buildUserCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.person_outline, color: Colors.white, size: 32),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Mark\'s Sari-Sari',
+                  style: GoogleFonts.inter(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+                Text(
+                  'Premium Subscription',
+                  style: GoogleFonts.inter(color: Colors.white.withOpacity(0.6), fontSize: 13, fontWeight: FontWeight.w400),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right, color: Colors.white, size: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 12),
+      child: Text(
+        title.toUpperCase(),
+        style: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          color: Colors.grey.shade500,
+          letterSpacing: 1.1,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsGroup(List<Widget> children) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _buildSettingItem(IconData icon, String title, String subtitle) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(10)),
+        child: Icon(icon, color: Colors.black87, size: 22),
+      ),
+      title: Text(
+        title,
+        style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.black),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade500),
+      ),
+      trailing: const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
+      onTap: () {},
+    );
+  }
+
+  Widget _buildBranding() {
+    return Center(
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.auto_awesome_outlined, size: 16, color: Colors.black),
+              const SizedBox(width: 8),
+              Text(
+                'SariApp',
+                style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.black),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Version 2.4.0 (Stable Build)',
+            style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.grey.shade500),
+          ),
+          const SizedBox(height: 24),
+          TextButton(
+            onPressed: () {},
+            child: Text(
+              'Sign Out',
+              style: GoogleFonts.inter(color: const Color(0xFFBA1A1A), fontSize: 14, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
+

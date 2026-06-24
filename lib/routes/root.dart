@@ -5,6 +5,8 @@ import 'dashboard/dashboard.dart';
 import 'products/products.dart';
 import 'checkout/checkout.dart';
 import 'settings/settings.dart';
+import 'scanner/scanner.dart';
+import 'reports/reports.dart';
 
 class Root extends StatelessWidget {
   const Root({super.key});
@@ -51,10 +53,11 @@ class _MyRootPageState extends State<MyRootPage> {
       const DashboardPage(),
       const ProductsPage(),
       const CheckoutPage(),
+      const ReportsPage(),
       const SettingsPage(),
     ];
 
-    final titles = ['Dashboard', 'Products', 'Checkout', 'Settings'];
+    final titles = ['Dashboard', 'Products', 'Checkout', 'Reports', 'Settings'];
 
     return Scaffold(
       appBar: AppBar(
@@ -78,7 +81,11 @@ class _MyRootPageState extends State<MyRootPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.qr_code_scanner_outlined, color: Colors.black),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const ScannerPage()),
+              );
+            },
           ),
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
@@ -107,6 +114,11 @@ class _MyRootPageState extends State<MyRootPage> {
             icon: Icon(Icons.shopping_cart_outlined),
             activeIcon: Icon(Icons.shopping_cart),
             label: 'Checkout',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart_outlined),
+            activeIcon: Icon(Icons.bar_chart),
+            label: 'Reports',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings_outlined),
