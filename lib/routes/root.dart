@@ -16,22 +16,22 @@ class Root extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const MyHomePage(title: 'Test'),
+      home: const MyRootPage(title: 'Sari App'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+class MyRootPage extends StatefulWidget {
+  const MyRootPage({super.key, required this.title});
 
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<MyRootPage> createState() => _MyRootPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _selectedIndex = 0; // Tracks the currently active tab
+class _MyRootPageState extends State<MyRootPage> {
+  int _selectedIndex = 0;
 
   // Updates the UI when a bottom navigation item is tapped
   void _onItemTapped(int index) {
@@ -49,10 +49,12 @@ class _MyHomePageState extends State<MyHomePage> {
       const SettingsPage(),
     ];
 
+    final titles = ['Dashboard', 'Products', 'Checkout', 'Settings'];
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+        title: Text(titles[_selectedIndex]),
       ),
 
       body: pages[_selectedIndex],
