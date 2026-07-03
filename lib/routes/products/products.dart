@@ -1,12 +1,95 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'product_form.dart';
+import 'restock.dart';
 
-class ProductsPage extends StatelessWidget {
+class ProductsPage extends StatefulWidget {
   const ProductsPage({super.key});
 
   @override
+  State<ProductsPage> createState() => _ProductsPageState();
+}
+
+class _ProductsPageState extends State<ProductsPage> {
+  final TextEditingController _searchController = TextEditingController();
+  List<dynamic> _products = [];
+  bool _isLoading = true;
+  String _searchQuery = '';
+  bool _sortAscending = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProducts();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchProducts() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      final data = await Supabase.instance.client
+          .from('products')
+          .select('*, product_barcode(id)');
+      setState(() {
+        _products = data;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading products: $e'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.black,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Filter by name or barcode
+    final filteredProducts = _products.where((product) {
+      final name = (product['name'] ?? '').toString().toLowerCase();
+      final query = _searchQuery.toLowerCase();
+      final matchesName = name.contains(query);
+
+      bool matchesBarcode = false;
+      final barcodes = product['product_barcode'];
+      if (barcodes is List) {
+        matchesBarcode = barcodes.any((bc) {
+          final bcId = (bc['id'] ?? '').toString().toLowerCase();
+          return bcId.contains(query);
+        });
+      } else if (barcodes is Map) {
+        final bcId = (barcodes['id'] ?? '').toString().toLowerCase();
+        matchesBarcode = bcId.contains(query);
+      }
+
+      return matchesName || matchesBarcode;
+    }).toList();
+
+    // Sort by stock quantity
+    filteredProducts.sort((a, b) {
+      final int qtyA = a['qty'] ?? 0;
+      final int qtyB = b['qty'] ?? 0;
+      return _sortAscending ? qtyA.compareTo(qtyB) : qtyB.compareTo(qtyA);
+    });
+
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9F9),
       body: Column(
@@ -35,6 +118,12 @@ class ProductsPage extends StatelessWidget {
                     border: Border.all(color: Colors.grey.shade300),
                   ),
                   child: TextField(
+                    controller: _searchController,
+                    onChanged: (val) {
+                      setState(() {
+                        _searchQuery = val.trim();
+                      });
+                    },
                     decoration: InputDecoration(
                       hintText: 'Search by name or barcode...',
                       hintStyle: GoogleFonts.inter(color: Colors.grey.shade400),
@@ -51,14 +140,14 @@ class ProductsPage extends StatelessWidget {
             ),
           ),
 
-          // Inventory Summary & Sort
+          // Alignment Info
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'INVENTORY ITEMS (124)',
+                  'INVENTORY ITEMS (${filteredProducts.length})',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
@@ -66,10 +155,14 @@ class ProductsPage extends StatelessWidget {
                   ),
                 ),
                 TextButton.icon(
-                  onPressed: () {},
+                  onPressed: () {
+                    setState(() {
+                      _sortAscending = !_sortAscending;
+                    });
+                  },
                   icon: const Icon(Icons.sort, size: 16, color: Colors.black),
                   label: Text(
-                    'SORT BY: STOCK LOW',
+                    'SORT BY: ${_sortAscending ? "STOCK LOW" : "STOCK HIGH"}',
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -83,58 +176,43 @@ class ProductsPage extends StatelessWidget {
 
           // Product List
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(24),
-              children: [
-                _buildProductItem(
-                  name: 'CANNED SARDINES (LIGO)',
-                  stock: 48,
-                  price: 24.50,
-                  isLow: false,
-                ),
-                _buildProductItem(
-                  name: 'INSTANT NOODLES (LUCKY ME)',
-                  stock: 8,
-                  price: 12.00,
-                  isLow: true,
-                ),
-                 _buildProductItem(
-                  name: 'DETERGENT BAR (TIDE)',
-                  stock: 3,
-                  price: 15.00,
-                  isCritical: true,
-                ),
-                _buildProductItem(
-                  name: 'COOKING OIL (500ML)',
-                  stock: 12,
-                  price: 45.00,
-                  isLow: false,
-                ),
-                const SizedBox(height: 16),
-                Center(
-                  child: TextButton(
-                    onPressed: () {},
-                    child: Text(
-                      'LOAD MORE PRODUCTS',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.grey.shade400,
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: Colors.black),
+                  )
+                : filteredProducts.isEmpty
+                    ? Center(
+                        child: Text(
+                          'NO PRODUCTS FOUND',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(24),
+                        itemCount: filteredProducts.length,
+                        itemBuilder: (context, index) {
+                          return _buildProductItem(
+                            context,
+                            product: filteredProducts[index],
+                          );
+                        },
                       ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          final added = await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const ProductForm()),
           );
+          if (added == true) {
+            _fetchProducts();
+          }
         },
         backgroundColor: Colors.black,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -143,13 +221,19 @@ class ProductsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildProductItem({
-    required String name,
-    required int stock,
-    required double price,
-    bool isLow = false,
-    bool isCritical = false,
+  Widget _buildProductItem(
+    BuildContext context, {
+    required Map<String, dynamic> product,
   }) {
+    final String name = (product['name'] ?? '').toString().toUpperCase();
+    final int stock = product['qty'] ?? 0;
+    final double price = (product['price'] as num?)?.toDouble() ?? 0.0;
+
+    // Use alertAt/alert_at if defined, otherwise defaults
+    final int alertAt = product['alert_at'] ?? product['alertAt'] ?? 10;
+    final bool isCritical = stock <= 3;
+    final bool isLow = stock <= alertAt && stock > 3;
+
     Color stockColor = Colors.grey.shade600;
     String stockLabel = '$stock PCS';
     
@@ -210,11 +294,52 @@ class ProductsPage extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.edit_outlined, size: 20, color: Colors.grey),
-            onPressed: () {},
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => RestockPage(product: product),
+                ),
+              );
+              _fetchProducts();
+            },
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline, size: 20, color: Colors.grey),
-            onPressed: () {},
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('DELETE PRODUCT'),
+                  content: Text('Are you sure you want to delete $name?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text('CANCEL'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      child: const Text('DELETE'),
+                    ),
+                  ],
+                ),
+              );
+              if (confirm == true) {
+                try {
+                  await Supabase.instance.client
+                      .from('products')
+                      .delete()
+                      .eq('id', product['id']);
+                  _fetchProducts();
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error deleting: $e')),
+                    );
+                  }
+                }
+              }
+            },
           ),
         ],
       ),

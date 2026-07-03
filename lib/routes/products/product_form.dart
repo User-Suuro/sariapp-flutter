@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sariapp/utils/validator.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProductForm extends StatefulWidget {
   const ProductForm({super.key});
@@ -20,6 +21,7 @@ class _ProductFormState extends State<ProductForm> {
 
   int _initialStock = 0;
   String _selectedCategory = 'CANNED GOODS';
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -38,16 +40,16 @@ class _ProductFormState extends State<ProductForm> {
     return InputDecoration(
       hintText: hintText,
       prefix: prefix,
-      hintStyle: GoogleFonts.inter(color: const Color(0xFF7E7576), fontSize: 16),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      filled: true,
-      fillColor: Colors.white,
-      enabledBorder: const OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.black, width: 2.0),
+      hintStyle: GoogleFonts.inter(
+        color: Colors.grey.shade400,
+        fontSize: 14,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.grey.shade300, width: 2.0),
         borderRadius: BorderRadius.zero,
       ),
       focusedBorder: const OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.black, width: 4.0),
+        borderSide: BorderSide(color: Colors.black, width: 2.0),
         borderRadius: BorderRadius.zero,
       ),
       errorBorder: const OutlineInputBorder(
@@ -55,8 +57,14 @@ class _ProductFormState extends State<ProductForm> {
         borderRadius: BorderRadius.zero,
       ),
       focusedErrorBorder: const OutlineInputBorder(
-        borderSide: BorderSide(color: Color(0xFFBA1A1A), width: 4.0),
+        borderSide: BorderSide(color: Color(0xFFBA1A1A), width: 2.0),
         borderRadius: BorderRadius.zero,
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      errorStyle: GoogleFonts.inter(
+        color: const Color(0xFFBA1A1A),
+        fontWeight: FontWeight.w600,
+        fontSize: 12,
       ),
     );
   }
@@ -224,30 +232,67 @@ class _ProductFormState extends State<ProductForm> {
     return null;
   }
 
-  void _saveProduct() {
+  Future<void> _saveProduct() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    final product = {
-      'barcode': _barcodeController.text.trim(),
-      'name': _nameController.text.trim(),
-      'costPrice': double.tryParse(_costPriceController.text) ?? 0.0,
-      'sellingPrice': double.tryParse(_sellingPriceController.text) ?? 0.0,
-      'initialStock': _initialStock,
-      'alertAt': int.tryParse(_alertAtController.text) ?? 10,
-      'category': _selectedCategory,
-    };
+    setState(() {
+      _isLoading = true;
+    });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Product saved successfully'),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.black,
-      ),
-    );
+    try {
+      final name = _nameController.text.trim();
+      final qty = _initialStock;
+      final price = double.tryParse(_sellingPriceController.text) ?? 0.0;
+      final category = _selectedCategory;
 
-    Navigator.of(context).pop(product);
+      // Insert product and query returned id
+      final response = await Supabase.instance.client.from('products').insert({
+        'name': name,
+        'desc': 'No description',
+        'qty': qty,
+        'price': price,
+        'category': category,
+      }).select('id').single();
+
+      final insertedId = response['id'];
+
+      final barcodeStr = _barcodeController.text.trim();
+      if (barcodeStr.isNotEmpty) {
+        await Supabase.instance.client.from('product_barcode').insert({
+          'id': barcodeStr,
+          'product_id': insertedId,
+        });
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Product saved successfully'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.black,
+          ),
+        );
+        Navigator.of(context).pop(true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving product: $e'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -493,30 +538,38 @@ class _ProductFormState extends State<ProductForm> {
           width: double.infinity,
           height: 56,
           child: ElevatedButton(
-            onPressed: _saveProduct,
+            onPressed: _isLoading ? null : _saveProduct,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.black,
               foregroundColor: Colors.white,
+              disabledBackgroundColor: Colors.grey.shade300,
+              disabledForegroundColor: Colors.grey.shade500,
               elevation: 0,
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.zero,
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'SAVE PRODUCT',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
+            child: _isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'SAVE PRODUCT',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.save, color: Colors.white),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 8),
-                const Icon(Icons.save, color: Colors.white),
-              ],
-            ),
           ),
         ),
       ),
