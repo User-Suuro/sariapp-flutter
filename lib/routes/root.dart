@@ -54,13 +54,11 @@ class _MyRootPageState extends State<MyRootPage> {
       const ProductsPage(),
       const CheckoutPage(),
       const ReportsPage(),
-      const SettingsPage(),
+      SettingsPage(onBack: () => _onItemTapped(0)),
     ];
 
-    final titles = ['Dashboard', 'Products', 'Checkout', 'Reports', 'Settings'];
-
     return Scaffold(
-      appBar: AppBar(
+      appBar: _selectedIndex == 4 ? null : AppBar(
         backgroundColor: const Color(0xFFF9F9F9),
         elevation: 0,
         surfaceTintColor: Colors.transparent,
