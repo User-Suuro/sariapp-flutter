@@ -1,12 +1,7 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sariapp/utils/validator.dart';
-<<<<<<< HEAD
-import 'package:image_picker/image_picker.dart';
-=======
 import 'package:supabase_flutter/supabase_flutter.dart';
->>>>>>> 523a523c693c82c9095128b7556a90bf550a128b
 
 class ProductForm extends StatefulWidget {
   const ProductForm({super.key});
@@ -28,10 +23,6 @@ class _ProductFormState extends State<ProductForm> {
   String _selectedCategory = 'CANNED GOODS';
   bool _isLoading = false;
 
-  final _imagePicker = ImagePicker();
-  File? _selectedImage;
-  String? _imagePath;
-
   @override
   void dispose() {
     _barcodeController.dispose();
@@ -42,17 +33,11 @@ class _ProductFormState extends State<ProductForm> {
     super.dispose();
   }
 
-  InputDecoration _inputDecoration({
-    required String hintText,
-    Widget? prefix,
-  }) {
+  InputDecoration _inputDecoration({required String hintText, Widget? prefix}) {
     return InputDecoration(
       hintText: hintText,
       prefix: prefix,
-      hintStyle: GoogleFonts.inter(
-        color: Colors.grey.shade400,
-        fontSize: 14,
-      ),
+      hintStyle: GoogleFonts.inter(color: Colors.grey.shade400, fontSize: 14),
       enabledBorder: OutlineInputBorder(
         borderSide: BorderSide(color: Colors.grey.shade300, width: 2.0),
         borderRadius: BorderRadius.zero,
@@ -171,7 +156,10 @@ class _ProductFormState extends State<ProductForm> {
                   });
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected ? Colors.black : Colors.white,
                     border: Border.all(color: Colors.black, width: 2.0),
@@ -199,7 +187,10 @@ class _ProductFormState extends State<ProductForm> {
                 );
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   border: Border.all(color: Colors.black, width: 2.0),
@@ -222,7 +213,7 @@ class _ProductFormState extends State<ProductForm> {
               ),
             ),
           ],
-        )
+        ),
       ],
     );
   }
@@ -246,18 +237,9 @@ class _ProductFormState extends State<ProductForm> {
       return;
     }
 
-<<<<<<< HEAD
-    final product = {
-      'name': _nameController.text.trim(),
-      'desc': _descController.text.trim(),
-      'qty': int.parse(_qtyController.text),
-      'image': _imagePath,
-    };
-=======
     setState(() {
       _isLoading = true;
     });
->>>>>>> 523a523c693c82c9095128b7556a90bf550a128b
 
     try {
       final name = _nameController.text.trim();
@@ -267,14 +249,18 @@ class _ProductFormState extends State<ProductForm> {
       final category = _selectedCategory;
 
       // Insert product and query returned id
-      final response = await Supabase.instance.client.from('products').insert({
-        'name': name,
-        'desc': 'No description',
-        'qty': qty,
-        'price': costPrice,
-        'price_sale': sellingPrice,
-        'category': category,
-      }).select('id').single();
+      final response = await Supabase.instance.client
+          .from('products')
+          .insert({
+            'name': name,
+            'desc': 'No description',
+            'qty': qty,
+            'price': costPrice,
+            'price_sale': sellingPrice,
+            'category': category,
+          })
+          .select('id')
+          .single();
 
       final insertedId = response['id'];
 
@@ -315,192 +301,15 @@ class _ProductFormState extends State<ProductForm> {
     }
   }
 
-  Future<void> _pickImage() async {
-    final XFile? image = await _imagePicker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
-    );
-
-    if (image == null) return;
-
-    setState(() {
-      _selectedImage = File(image.path);
-      _imagePath = image.path;
-    });
-
-    _formKey.currentState?.validate();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-<<<<<<< HEAD
-      appBar: AppBar(title: const Text('Add Product')),
-      body: Center(
-        child: SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          'Product Information',
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        TextFormField(
-                          controller: _nameController,
-                          decoration: _inputDecoration(
-                            label: 'Product Name',
-                            icon: Icons.inventory_2,
-                          ),
-                          validator: Validators.compose([
-                            Validators.required('Product Name'),
-                            Validators.minLength(3),
-                          ]),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        TextFormField(
-                          controller: _descController,
-                          maxLines: 4,
-                          decoration: _inputDecoration(
-                            label: 'Description',
-                            icon: Icons.description,
-                          ).copyWith(alignLabelWithHint: true),
-                          validator: Validators.compose([
-                            Validators.minLength(3),
-                          ]),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        TextFormField(
-                          controller: _qtyController,
-                          keyboardType: TextInputType.number,
-                          decoration: _inputDecoration(
-                            label: 'Initial Quantity',
-                            icon: Icons.numbers,
-                          ),
-                          validator: Validators.compose([
-                            Validators.required('Quantity'),
-                            Validators.nonNegativeInteger(),
-                          ]),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // Image Pickers
-                        FormField<String>(
-                          validator: Validators.compose([
-                            Validators.required('Product Image'),
-                          ]),
-                          initialValue: _imagePath,
-                          builder: (field) {
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                InkWell(
-                                  onTap: () async {
-                                    await _pickImage();
-                                    field.didChange(_imagePath);
-                                  },
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Container(
-                                    height: 180,
-                                    width: double.infinity,
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: field.hasError
-                                            ? Colors.red
-                                            : Colors.grey,
-                                      ),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: _selectedImage == null
-                                        ? const Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Icon(Icons.add_a_photo, size: 48),
-                                              SizedBox(height: 8),
-                                              Text(
-                                                "Tap to select product image",
-                                              ),
-                                            ],
-                                          )
-                                        : ClipRRect(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                            child: Image.file(
-                                              _selectedImage!,
-                                              fit: BoxFit.cover,
-                                            ),
-                                          ),
-                                  ),
-                                ),
-                                if (field.hasError)
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                      top: 8,
-                                      left: 12,
-                                    ),
-                                    child: Text(
-                                      field.errorText!,
-                                      style: const TextStyle(
-                                        color: Colors.red,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 24),
-
-                        FilledButton.icon(
-                          onPressed: _saveProduct,
-                          icon: const Icon(Icons.save),
-                          label: const Text('Save Product'),
-                          style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 16,
-                              horizontal: 16,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-=======
       backgroundColor: const Color(0xFFF9F9F9),
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(56.0),
         child: Container(
           decoration: const BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: Colors.black,
-                width: 2.0,
->>>>>>> 523a523c693c82c9095128b7556a90bf550a128b
-              ),
-            ),
+            border: Border(bottom: BorderSide(color: Colors.black, width: 2.0)),
           ),
           child: AppBar(
             backgroundColor: const Color(0xFFF9F9F9),
@@ -524,7 +333,9 @@ class _ProductFormState extends State<ProductForm> {
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Enter barcode and details to add a new product.'),
+                      content: Text(
+                        'Enter barcode and details to add a new product.',
+                      ),
                       behavior: SnackBarBehavior.floating,
                       backgroundColor: Colors.black,
                     ),
@@ -539,7 +350,10 @@ class _ProductFormState extends State<ProductForm> {
         child: Center(
           child: Container(
             constraints: const BoxConstraints(maxWidth: 672),
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 24.0,
+            ),
             child: Form(
               key: _formKey,
               child: Column(
@@ -558,7 +372,10 @@ class _ProductFormState extends State<ProductForm> {
                           ),
                         );
                       },
-                      icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
+                      icon: const Icon(
+                        Icons.qr_code_scanner,
+                        color: Colors.white,
+                      ),
                       label: Text(
                         'SCAN BARCODE',
                         style: GoogleFonts.inter(
@@ -601,7 +418,9 @@ class _ProductFormState extends State<ProductForm> {
                   TextFormField(
                     controller: _nameController,
                     style: GoogleFonts.inter(fontSize: 16, color: Colors.black),
-                    decoration: _inputDecoration(hintText: 'e.g. Instant Noodles (Spicy)'),
+                    decoration: _inputDecoration(
+                      hintText: 'e.g. Instant Noodles (Spicy)',
+                    ),
                     validator: Validators.compose([
                       Validators.required('Product Name'),
                       Validators.minLength(3),
@@ -618,8 +437,14 @@ class _ProductFormState extends State<ProductForm> {
                             _buildFieldLabel('Cost Price'),
                             TextFormField(
                               controller: _costPriceController,
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              style: GoogleFonts.inter(fontSize: 16, color: Colors.black),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              style: GoogleFonts.inter(
+                                fontSize: 16,
+                                color: Colors.black,
+                              ),
                               decoration: _inputDecoration(
                                 hintText: '0.00',
                                 prefix: Padding(
@@ -634,7 +459,8 @@ class _ProductFormState extends State<ProductForm> {
                                   ),
                                 ),
                               ),
-                              validator: (val) => _validatePrice(val, 'Cost Price'),
+                              validator: (val) =>
+                                  _validatePrice(val, 'Cost Price'),
                             ),
                           ],
                         ),
@@ -647,8 +473,14 @@ class _ProductFormState extends State<ProductForm> {
                             _buildFieldLabel('Selling Price'),
                             TextFormField(
                               controller: _sellingPriceController,
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              style: GoogleFonts.inter(fontSize: 16, color: Colors.black),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              style: GoogleFonts.inter(
+                                fontSize: 16,
+                                color: Colors.black,
+                              ),
                               decoration: _inputDecoration(
                                 hintText: '0.00',
                                 prefix: Padding(
@@ -663,7 +495,8 @@ class _ProductFormState extends State<ProductForm> {
                                   ),
                                 ),
                               ),
-                              validator: (val) => _validatePrice(val, 'Selling Price'),
+                              validator: (val) =>
+                                  _validatePrice(val, 'Selling Price'),
                             ),
                           ],
                         ),
@@ -721,9 +554,7 @@ class _ProductFormState extends State<ProductForm> {
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Color(0xFFF9F9F9),
-          border: Border(
-            top: BorderSide(color: Colors.black, width: 2.0),
-          ),
+          border: Border(top: BorderSide(color: Colors.black, width: 2.0)),
         ),
         padding: const EdgeInsets.all(16.0),
         child: SizedBox(
@@ -745,7 +576,10 @@ class _ProductFormState extends State<ProductForm> {
                 ? const SizedBox(
                     height: 20,
                     width: 20,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
                   )
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -768,4 +602,3 @@ class _ProductFormState extends State<ProductForm> {
     );
   }
 }
-
