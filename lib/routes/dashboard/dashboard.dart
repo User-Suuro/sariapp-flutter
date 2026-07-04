@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../products/product_form.dart';
+import '../products/restock.dart';
+import '../scanner/scanner.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -90,6 +93,12 @@ class DashboardPage extends StatelessWidget {
              label: 'Scan Product',
              icon: Icons.barcode_reader,
              isPrimary: true,
+             onTap: () {
+               Navigator.push(
+                 context,
+                 MaterialPageRoute(builder: (context) => const ScannerPage()),
+               );
+             },
           ),
           const SizedBox(height: 12),
           Row(
@@ -99,6 +108,12 @@ class DashboardPage extends StatelessWidget {
                   label: 'Add New Product',
                   icon: Icons.add_circle_outline,
                   isPrimary: false,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ProductForm()),
+                    );
+                  },
                 ),
               ),
               const SizedBox(width: 12),
@@ -107,6 +122,12 @@ class DashboardPage extends StatelessWidget {
                   label: 'Restock Inventory',
                   icon: Icons.history,
                   isPrimary: false,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const RestockPage()),
+                    );
+                  },
                 ),
               ),
             ],
@@ -184,28 +205,32 @@ class DashboardPage extends StatelessWidget {
     required String label,
     required IconData icon,
     required bool isPrimary,
+    required VoidCallback onTap,
   }) {
-    return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        color: isPrimary ? Colors.black : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: isPrimary ? null : Border.all(color: Colors.grey.shade300),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: isPrimary ? Colors.white : Colors.black, size: 20),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isPrimary ? Colors.white : Colors.black,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 56,
+        decoration: BoxDecoration(
+          color: isPrimary ? Colors.black : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: isPrimary ? null : Border.all(color: Colors.grey.shade300),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: isPrimary ? Colors.white : Colors.black, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: isPrimary ? Colors.white : Colors.black,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
