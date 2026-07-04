@@ -57,8 +57,6 @@ class _MyRootPageState extends State<MyRootPage> {
       const SettingsPage(),
     ];
 
-    final titles = ['Dashboard', 'Products', 'Checkout', 'Reports', 'Settings'];
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFFF9F9F9),

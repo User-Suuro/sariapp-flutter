@@ -20,7 +20,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   Widget build(BuildContext context) {
     double total = _cartItems.fold(0, (sum, item) => sum + (item['price'] * item['qty']));
     int totalItems = _cartItems.fold(0, (sum, item) => sum + (item['qty'] as int));
-
+    
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9F9),
       body: Column(
