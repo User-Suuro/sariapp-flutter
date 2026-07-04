@@ -327,22 +327,6 @@ class _ProductFormState extends State<ProductForm> {
                 letterSpacing: -0.5,
               ),
             ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.help_outline, color: Colors.black),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Enter barcode and details to add a new product.',
-                      ),
-                      behavior: SnackBarBehavior.floating,
-                      backgroundColor: Colors.black,
-                    ),
-                  );
-                },
-              ),
-            ],
           ),
         ),
       ),
@@ -359,61 +343,6 @@ class _ProductFormState extends State<ProductForm> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Barcode scanner helper starting...'),
-                            behavior: SnackBarBehavior.floating,
-                            backgroundColor: Colors.black,
-                          ),
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.qr_code_scanner,
-                        color: Colors.white,
-                      ),
-                      label: Text(
-                        'SCAN BARCODE',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.zero,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 4, bottom: 32),
-                      child: Text(
-                        'Use camera to identify product quickly',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF5D5F5F),
-                        ),
-                      ),
-                    ),
-                  ),
-                  _buildFieldLabel('Barcode Number'),
-                  TextFormField(
-                    controller: _barcodeController,
-                    style: GoogleFonts.inter(fontSize: 16, color: Colors.black),
-                    decoration: _inputDecoration(hintText: '000000000000'),
-                  ),
-                  const SizedBox(height: 24),
                   _buildFieldLabel('Product Name'),
                   TextFormField(
                     controller: _nameController,
