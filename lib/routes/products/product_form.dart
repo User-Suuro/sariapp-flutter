@@ -244,7 +244,8 @@ class _ProductFormState extends State<ProductForm> {
     try {
       final name = _nameController.text.trim();
       final qty = _initialStock;
-      final price = double.tryParse(_sellingPriceController.text) ?? 0.0;
+      final costPrice = double.tryParse(_costPriceController.text) ?? 0.0;
+      final sellingPrice = double.tryParse(_sellingPriceController.text) ?? 0.0;
       final category = _selectedCategory;
 
       // Insert product and query returned id
@@ -252,7 +253,8 @@ class _ProductFormState extends State<ProductForm> {
         'name': name,
         'desc': 'No description',
         'qty': qty,
-        'price': price,
+        'price': costPrice,
+        'price_sale': sellingPrice,
         'category': category,
       }).select('id').single();
 

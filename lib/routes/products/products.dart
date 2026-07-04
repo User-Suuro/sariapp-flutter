@@ -227,7 +227,8 @@ class _ProductsPageState extends State<ProductsPage> {
   }) {
     final String name = (product['name'] ?? '').toString().toUpperCase();
     final int stock = product['qty'] ?? 0;
-    final double price = (product['price'] as num?)?.toDouble() ?? 0.0;
+    final double sellingPrice = (product['price_sale'] as num?)?.toDouble() ?? (product['price'] as num?)?.toDouble() ?? 0.0;
+    final double costPrice = (product['price'] as num?)?.toDouble() ?? 0.0;
 
     // Use alertAt/alert_at if defined, otherwise defaults
     final int alertAt = product['alert_at'] ?? product['alertAt'] ?? 10;
@@ -280,13 +281,24 @@ class _ProductsPageState extends State<ProductsPage> {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      '₱${price.toStringAsFixed(2)}',
+                      '₱${sellingPrice.toStringAsFixed(2)}',
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
                         color: Colors.black,
                       ),
                     ),
+                    if (costPrice > 0 && costPrice != sellingPrice) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        'Cost: ₱${costPrice.toStringAsFixed(2)}',
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ],
