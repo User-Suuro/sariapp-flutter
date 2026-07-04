@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -9,12 +10,418 @@ class CheckoutPage extends StatefulWidget {
 }
 
 class _CheckoutPageState extends State<CheckoutPage> {
-  // Mock cart items
-  final List<Map<String, dynamic>> _cartItems = [
-    {'name': 'LUCKY ME! PANCIT CANTON', 'price': 14.00, 'qty': 3},
-    {'name': 'CANNED SARDINES (LIGO)', 'price': 24.50, 'qty': 1},
-    {'name': 'DETERGENT BAR (TIDE)', 'price': 15.00, 'qty': 2},
-  ];
+  List<Map<String, dynamic>> _dbProducts = [];
+  bool _isLoadingProducts = true;
+  String _dialogSearchQuery = '';
+  Map<String, dynamic>? _selectedDialogProduct;
+  int _dialogQty = 1;
+
+  final List<Map<String, dynamic>> _cartItems = [];
+  bool _isSavingCheckout = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProducts();
+  }
+
+  Future<void> _fetchProducts() async {
+    try {
+      final data = await Supabase.instance.client
+          .from('products')
+          .select('*, product_barcode(id)');
+      if (mounted) {
+        setState(() {
+          _dbProducts = List<Map<String, dynamic>>.from(data);
+          _isLoadingProducts = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingProducts = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading products: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _completeSale() async {
+    if (_cartItems.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cart is empty!'),
+          backgroundColor: Colors.black,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSavingCheckout = true;
+    });
+
+    try {
+      final double total = _cartItems.fold(0, (sum, item) => sum + (item['price'] * item['qty']));
+
+      // 1. Insert Checkout
+      dynamic checkoutId;
+      try {
+        final checkoutRes = await Supabase.instance.client
+            .from('checkout')
+            .insert({
+              'total_sale': total,
+            })
+            .select('id')
+            .single();
+        checkoutId = checkoutRes['id'];
+      } catch (err) {
+        final errStr = err.toString();
+        if (errStr.contains('checkout') && (errStr.contains('does not exist') || errStr.contains('42P01'))) {
+          final checkoutRes = await Supabase.instance.client
+              .from('checkout')
+              .insert({
+                'total_sale': total,
+              })
+              .select('id')
+              .single();
+          checkoutId = checkoutRes['id'];
+        } else {
+          rethrow;
+        }
+      }
+
+      // 2. Insert Sales
+      try {
+        final List<Map<String, dynamic>> sales = _cartItems.map((item) {
+          return {
+            'checkout_id': checkoutId,
+            'product_barcode': item['barcode'],
+            'qty_item': item['qty'],
+            'total_price': item['price'] * item['qty'],
+          };
+        }).toList();
+
+        await Supabase.instance.client.from('sale').insert(sales);
+      } catch (err) {
+        final errStr = err.toString();
+        if (errStr.contains('checkout_id') || errStr.contains('column') || errStr.contains('42703')) {
+          final List<Map<String, dynamic>> salesWithTypo = _cartItems.map((item) {
+            return {
+              'checkout_id': checkoutId,
+              'product_barcode': item['barcode'],
+              'qty_item': item['qty'],
+              'total_price': item['price'] * item['qty'],
+            };
+          }).toList();
+          await Supabase.instance.client.from('sale').insert(salesWithTypo);
+        } else {
+          rethrow;
+        }
+      }
+
+      // 3. Update stock levels
+      for (final item in _cartItems) {
+        final product = item['product'];
+        final int currentStock = product['qty'] ?? 0;
+        final int soldQty = item['qty'] as int;
+        final int newStock = currentStock - soldQty;
+
+        await Supabase.instance.client
+            .from('products')
+            .update({'qty': newStock})
+            .eq('id', product['id']);
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('SALE COMPLETED SUCCESSFULLY'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.black,
+          ),
+        );
+        setState(() {
+          _cartItems.clear();
+        });
+        _fetchProducts();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving checkout: $e'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSavingCheckout = false;
+        });
+      }
+    }
+  }
+
+  void _showAddProductDialog() {
+    if (_isLoadingProducts) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please wait, loading products...')),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            final List<Map<String, dynamic>> filtered = _dbProducts.where((p) {
+              final name = (p['name'] ?? '').toString().toLowerCase();
+              final query = _dialogSearchQuery.toLowerCase();
+              return name.contains(query);
+            }).toList();
+
+            return AlertDialog(
+              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              backgroundColor: const Color(0xFFF9F9F9),
+              title: Text(
+                'ADD ITEM MANUALLY',
+                style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 16),
+              ),
+              content: SizedBox(
+                width: 320,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      onChanged: (val) {
+                        setStateDialog(() {
+                          _dialogSearchQuery = val;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Search product...',
+                        hintStyle: GoogleFonts.inter(color: Colors.grey),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        enabledBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black, width: 2.0),
+                          borderRadius: BorderRadius.zero,
+                        ),
+                        focusedBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black, width: 2.0),
+                          borderRadius: BorderRadius.zero,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    if (_selectedDialogProduct == null) ...[
+                      Text(
+                        'SELECT PRODUCT:',
+                        style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 11),
+                      ),
+                      const SizedBox(height: 6),
+                      SizedBox(
+                        height: 200,
+                        child: filtered.isEmpty
+                            ? Center(
+                                child: Text(
+                                  'NO ITEMS FOUND',
+                                  style: GoogleFonts.inter(color: Colors.grey, fontSize: 12),
+                                ),
+                              )
+                            : ListView.builder(
+                                itemCount: filtered.length,
+                                itemBuilder: (ctx, idx) {
+                                  final p = filtered[idx];
+                                  final name = (p['name'] ?? '').toString().toUpperCase();
+                                  final double sellingPrice = (p['price_sale'] as num?)?.toDouble() ?? 
+                                                              (p['price'] as num?)?.toDouble() ?? 0.0;
+                                  final int stock = p['qty'] ?? 0;
+                                  return ListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    title: Text(
+                                      name,
+                                      style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13),
+                                    ),
+                                    subtitle: Text(
+                                      '₱${sellingPrice.toStringAsFixed(2)} | Stock: $stock',
+                                      style: GoogleFonts.inter(fontSize: 12),
+                                    ),
+                                    onTap: () {
+                                      setStateDialog(() {
+                                        _selectedDialogProduct = p;
+                                        _dialogQty = 1;
+                                      });
+                                    },
+                                  );
+                                },
+                              ),
+                      ),
+                    ] else ...[
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: Colors.black, width: 2.0),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              (_selectedDialogProduct!['name'] ?? '').toString().toUpperCase(),
+                              style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 14),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Price: ₱${((_selectedDialogProduct!['price_sale'] as num?)?.toDouble() ?? (_selectedDialogProduct!['price'] as num?)?.toDouble() ?? 0.0).toStringAsFixed(2)}',
+                              style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 12),
+                            ),
+                            Text(
+                              'Stock: ${_selectedDialogProduct!['qty'] ?? 0}',
+                              style: GoogleFonts.inter(fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('QTY:', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.remove_circle_outline),
+                                onPressed: () {
+                                  if (_dialogQty > 1) {
+                                    setStateDialog(() {
+                                      _dialogQty--;
+                                    });
+                                  }
+                                },
+                              ),
+                              Text(
+                                '$_dialogQty',
+                                style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.add_circle_outline),
+                                onPressed: () {
+                                  final int maxStock = _selectedDialogProduct!['qty'] ?? 0;
+                                  if (_dialogQty < maxStock) {
+                                    setStateDialog(() {
+                                      _dialogQty++;
+                                    });
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Cannot exceed available stock!'),
+                                        duration: Duration(seconds: 1),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      TextButton(
+                        onPressed: () {
+                          setStateDialog(() {
+                            _selectedDialogProduct = null;
+                          });
+                        },
+                        child: Text(
+                          'CHANGE PRODUCT',
+                          style: GoogleFonts.inter(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 11),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    _dialogSearchQuery = '';
+                    _selectedDialogProduct = null;
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('CANCEL', style: GoogleFonts.inter(color: Colors.black)),
+                ),
+                ElevatedButton(
+                  onPressed: _selectedDialogProduct == null
+                      ? null
+                      : () {
+                          final double sellingPrice = (_selectedDialogProduct!['price_sale'] as num?)?.toDouble() ?? 
+                                                     (_selectedDialogProduct!['price'] as num?)?.toDouble() ?? 0.0;
+                          final String name = (_selectedDialogProduct!['name'] ?? '').toString();
+                          final barcodes = _selectedDialogProduct!['product_barcode'];
+                          String? barcodeStr;
+                          if (barcodes is List && barcodes.isNotEmpty) {
+                            barcodeStr = barcodes[0]['id']?.toString();
+                          } else if (barcodes is Map) {
+                            barcodeStr = barcodes['id']?.toString();
+                          }
+
+                          setState(() {
+                            final existingIndex = _cartItems.indexWhere((item) => 
+                              item['product']['id'] == _selectedDialogProduct!['id']);
+                            if (existingIndex != -1) {
+                              final int availableStock = _selectedDialogProduct!['qty'] ?? 0;
+                              final int currentQtyInCart = _cartItems[existingIndex]['qty'] as int;
+                              final int combinedQty = currentQtyInCart + _dialogQty;
+                              if (combinedQty <= availableStock) {
+                                _cartItems[existingIndex]['qty'] = combinedQty;
+                              } else {
+                                _cartItems[existingIndex]['qty'] = availableStock;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Cart quantity capped to maximum available stock.'),
+                                  ),
+                                );
+                              }
+                            } else {
+                              _cartItems.add({
+                                'name': name.toUpperCase(),
+                                'price': sellingPrice,
+                                'qty': _dialogQty,
+                                'product': _selectedDialogProduct,
+                                'barcode': barcodeStr,
+                              });
+                            }
+                          });
+
+                          _dialogSearchQuery = '';
+                          _selectedDialogProduct = null;
+                          Navigator.of(context).pop();
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey.shade300,
+                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                  ),
+                  child: Text('ADD TO CART', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,26 +432,63 @@ class _CheckoutPageState extends State<CheckoutPage> {
       backgroundColor: const Color(0xFFF9F9F9),
       body: Column(
         children: [
-          // Scan Product Button
+          // Operation Buttons Row (Scan & Add Box)
           Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: _buildOperationButton(
-              label: 'SCAN PRODUCT',
-              icon: Icons.barcode_reader,
-              isPrimary: true,
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildOperationButton(
+                    label: 'SCAN PRODUCT',
+                    icon: Icons.barcode_reader,
+                    isPrimary: true,
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Barcode scanner functionality is in scan flow.'),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: _showAddProductDialog,
+                  child: Container(
+                    height: 56,
+                    width: 56,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: Colors.black, width: 2.0),
+                    ),
+                    child: const Icon(Icons.add, color: Colors.black, size: 24),
+                  ),
+                ),
+              ],
             ),
           ),
 
           // Cart Items List
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              itemCount: _cartItems.length,
-              itemBuilder: (context, index) {
-                final item = _cartItems[index];
-                return _buildCartItem(item, index);
-              },
-            ),
+            child: _cartItems.isEmpty
+                ? Center(
+                    child: Text(
+                      'CART IS EMPTY',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    itemCount: _cartItems.length,
+                    itemBuilder: (context, index) {
+                      final item = _cartItems[index];
+                      return _buildCartItem(item, index);
+                    },
+                  ),
           ),
 
           // Footer Summary
@@ -100,11 +544,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  _buildOperationButton(
-                    label: 'COMPLETE SALE',
-                    icon: Icons.check_circle_outline,
-                    isPrimary: true,
-                  ),
+                  _isSavingCheckout
+                      ? const Center(
+                          child: CircularProgressIndicator(color: Colors.black),
+                        )
+                      : _buildOperationButton(
+                          label: 'COMPLETE SALE',
+                          icon: Icons.check_circle_outline,
+                          isPrimary: true,
+                          onTap: _completeSale,
+                        ),
                 ],
               ),
             ),
@@ -176,9 +625,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 IconButton(
                   icon: const Icon(Icons.add, size: 16),
                   onPressed: () {
-                    setState(() {
-                      item['qty']++;
-                    });
+                    final int maxStock = item['product']?['qty'] ?? 9999;
+                    if (item['qty'] < maxStock) {
+                      setState(() {
+                        item['qty']++;
+                      });
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Cannot exceed available stock!'),
+                          duration: Duration(seconds: 1),
+                        ),
+                      );
+                    }
                   },
                 ),
               ],
@@ -195,7 +654,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
             ),
             child: IconButton(
               icon: const Icon(Icons.delete_outline, color: Color(0xFFBA1A1A), size: 20),
-              onPressed: () {},
+              onPressed: () {
+                setState(() {
+                  _cartItems.removeAt(index);
+                });
+              },
             ),
           ),
         ],
@@ -207,30 +670,34 @@ class _CheckoutPageState extends State<CheckoutPage> {
     required String label,
     required IconData icon,
     required bool isPrimary,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      height: 56,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: isPrimary ? Colors.black : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: isPrimary ? null : Border.all(color: Colors.grey.shade300),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: isPrimary ? Colors.white : Colors.black, size: 20),
-          const SizedBox(width: 12),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: isPrimary ? Colors.white : Colors.black,
-              letterSpacing: 1.2,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 56,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: isPrimary ? Colors.black : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: isPrimary ? null : Border.all(color: Colors.grey.shade300),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: isPrimary ? Colors.white : Colors.black, size: 20),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: isPrimary ? Colors.white : Colors.black,
+                letterSpacing: 1.2,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
