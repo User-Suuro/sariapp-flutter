@@ -58,43 +58,24 @@ class _MyRootPageState extends State<MyRootPage> {
     ];
 
     return Scaffold(
-      appBar: _selectedIndex == 4 ? null : AppBar(
-        backgroundColor: const Color(0xFFF9F9F9),
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.menu, color: Colors.black),
-          onPressed: () {},
-        ),
-        title: Text(
-          'SARIAPP',
-          style: GoogleFonts.inter(
-            fontWeight: FontWeight.w900,
-            fontSize: 20,
-            letterSpacing: 2,
-            color: Colors.black,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.qr_code_scanner_outlined, color: Colors.black),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const ScannerPage()),
-              );
-            },
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.grey.shade300,
-              child: const Icon(Icons.person_outline, size: 20, color: Colors.black),
+      appBar: _selectedIndex == 4
+          ? null
+          : AppBar(
+              backgroundColor: const Color(0xFFF9F9F9),
+              elevation: 0,
+              surfaceTintColor: Colors.transparent,
+
+              title: Text(
+                'SARIAPP',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 20,
+                  letterSpacing: 2,
+                  color: Colors.black,
+                ),
+              ),
+              centerTitle: true,
             ),
-          ),
-        ],
-      ),
       body: pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
@@ -132,7 +113,10 @@ class _MyRootPageState extends State<MyRootPage> {
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
         elevation: 10,
-        selectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 12),
+        selectedLabelStyle: GoogleFonts.inter(
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
         unselectedLabelStyle: GoogleFonts.inter(fontSize: 12),
       ),
     );
