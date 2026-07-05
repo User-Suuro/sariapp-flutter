@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'product_form.dart';
-import 'restock.dart';
+import 'edit_product.dart';
 
 class ProductsPage extends StatefulWidget {
   const ProductsPage({super.key});
@@ -130,7 +130,10 @@ class _ProductsPageState extends State<ProductsPage> {
                       border: InputBorder.none,
                       icon: const Icon(Icons.search, color: Colors.black),
                       suffixIcon: IconButton(
-                        icon: const Icon(Icons.qr_code_scanner, color: Colors.black),
+                        icon: const Icon(
+                          Icons.qr_code_scanner,
+                          color: Colors.black,
+                        ),
                         onPressed: () {},
                       ),
                     ),
@@ -181,26 +184,26 @@ class _ProductsPageState extends State<ProductsPage> {
                     child: CircularProgressIndicator(color: Colors.black),
                   )
                 : filteredProducts.isEmpty
-                    ? Center(
-                        child: Text(
-                          'NO PRODUCTS FOUND',
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(24),
-                        itemCount: filteredProducts.length,
-                        itemBuilder: (context, index) {
-                          return _buildProductItem(
-                            context,
-                            product: filteredProducts[index],
-                          );
-                        },
+                ? Center(
+                    child: Text(
+                      'NO PRODUCTS FOUND',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
                       ),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(24),
+                    itemCount: filteredProducts.length,
+                    itemBuilder: (context, index) {
+                      return _buildProductItem(
+                        context,
+                        product: filteredProducts[index],
+                      );
+                    },
+                  ),
           ),
         ],
       ),
@@ -227,7 +230,10 @@ class _ProductsPageState extends State<ProductsPage> {
   }) {
     final String name = (product['name'] ?? '').toString().toUpperCase();
     final int stock = product['qty'] ?? 0;
-    final double sellingPrice = (product['price_sale'] as num?)?.toDouble() ?? (product['price'] as num?)?.toDouble() ?? 0.0;
+    final double sellingPrice =
+        (product['price_sale'] as num?)?.toDouble() ??
+        (product['price'] as num?)?.toDouble() ??
+        0.0;
     final double costPrice = (product['price'] as num?)?.toDouble() ?? 0.0;
 
     // Use alertAt/alert_at if defined, otherwise defaults
@@ -237,7 +243,7 @@ class _ProductsPageState extends State<ProductsPage> {
 
     Color stockColor = Colors.grey.shade600;
     String stockLabel = '$stock PCS';
-    
+
     if (isCritical) {
       stockColor = const Color(0xFFBA1A1A);
       stockLabel = '$stock PCS (CRITICAL)';
@@ -252,7 +258,11 @@ class _ProductsPageState extends State<ProductsPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isCritical ? const Color(0xFFBA1A1A).withValues(alpha: 0.2) : Colors.grey.shade200),
+        border: Border.all(
+          color: isCritical
+              ? const Color(0xFFBA1A1A).withValues(alpha: 0.2)
+              : Colors.grey.shade200,
+        ),
       ),
       child: Row(
         children: [
@@ -310,14 +320,18 @@ class _ProductsPageState extends State<ProductsPage> {
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => RestockPage(product: product),
+                  builder: (context) => EditProductPage(product: product),
                 ),
               );
               _fetchProducts();
             },
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline, size: 20, color: Colors.grey),
+            icon: const Icon(
+              Icons.delete_outline,
+              size: 20,
+              color: Colors.grey,
+            ),
             onPressed: () async {
               final confirm = await showDialog<bool>(
                 context: context,

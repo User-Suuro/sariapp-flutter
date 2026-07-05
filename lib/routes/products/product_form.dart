@@ -12,8 +12,6 @@ class ProductForm extends StatefulWidget {
 
 class _ProductFormState extends State<ProductForm> {
   final _formKey = GlobalKey<FormState>();
-
-  final _barcodeController = TextEditingController();
   final _nameController = TextEditingController();
   final _costPriceController = TextEditingController();
   final _sellingPriceController = TextEditingController();
@@ -25,7 +23,6 @@ class _ProductFormState extends State<ProductForm> {
 
   @override
   void dispose() {
-    _barcodeController.dispose();
     _nameController.dispose();
     _costPriceController.dispose();
     _sellingPriceController.dispose();
@@ -249,7 +246,7 @@ class _ProductFormState extends State<ProductForm> {
       final category = _selectedCategory;
 
       // Insert product and query returned id
-      final response = await Supabase.instance.client
+      await Supabase.instance.client
           .from('products')
           .insert({
             'name': name,
@@ -261,16 +258,6 @@ class _ProductFormState extends State<ProductForm> {
           })
           .select('id')
           .single();
-
-      final insertedId = response['id'];
-
-      final barcodeStr = _barcodeController.text.trim();
-      if (barcodeStr.isNotEmpty) {
-        await Supabase.instance.client.from('product_barcode').insert({
-          'id': barcodeStr,
-          'product_id': insertedId,
-        });
-      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

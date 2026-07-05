@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../products/product_form.dart';
-import '../products/restock.dart';
+import '../products/edit_product.dart';
 import '../scanner/scanner.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -90,15 +90,15 @@ class DashboardPage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _buildOperationButton(
-             label: 'Scan Product',
-             icon: Icons.barcode_reader,
-             isPrimary: true,
-             onTap: () {
-               Navigator.push(
-                 context,
-                 MaterialPageRoute(builder: (context) => const ScannerPage()),
-               );
-             },
+            label: 'Scan Product',
+            icon: Icons.barcode_reader,
+            isPrimary: true,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ScannerPage()),
+              );
+            },
           ),
           const SizedBox(height: 12),
           Row(
@@ -111,7 +111,9 @@ class DashboardPage extends StatelessWidget {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const ProductForm()),
+                      MaterialPageRoute(
+                        builder: (context) => const ProductForm(),
+                      ),
                     );
                   },
                 ),
@@ -125,7 +127,9 @@ class DashboardPage extends StatelessWidget {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const RestockPage()),
+                      MaterialPageRoute(
+                        builder: (context) => const EditProductPage(),
+                      ),
                     );
                   },
                 ),
@@ -144,9 +148,7 @@ class DashboardPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _buildInsightCard(
-            tip: 'Keep your best-sellers at eye level.',
-          ),
+          _buildInsightCard(tip: 'Keep your best-sellers at eye level.'),
           const SizedBox(height: 24),
         ],
       ),
@@ -168,7 +170,9 @@ class DashboardPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(24),
-        border: borderColor != null ? Border.all(color: borderColor, width: 1) : null,
+        border: borderColor != null
+            ? Border.all(color: borderColor, width: 1)
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -219,7 +223,11 @@ class DashboardPage extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: isPrimary ? Colors.white : Colors.black, size: 20),
+            Icon(
+              icon,
+              color: isPrimary ? Colors.white : Colors.black,
+              size: 20,
+            ),
             const SizedBox(width: 8),
             Text(
               label,
@@ -242,7 +250,9 @@ class DashboardPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         color: Colors.grey.shade200,
         image: const DecorationImage(
-          image: NetworkImage('https://images.unsplash.com/photo-1534452285072-8e90f4bd54ed?q=80&w=600'), // Placeholder for store shelf
+          image: NetworkImage(
+            'https://images.unsplash.com/photo-1534452285072-8e90f4bd54ed?q=80&w=600',
+          ), // Placeholder for store shelf
           fit: BoxFit.cover,
           colorFilter: ColorFilter.mode(Colors.black54, BlendMode.darken),
         ),
