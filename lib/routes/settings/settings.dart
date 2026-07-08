@@ -238,15 +238,7 @@ class _SettingsPageState extends State<SettingsPage> {
             width: double.infinity,
             height: 56,
             child: ElevatedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Profile updated!'),
-                    behavior: SnackBarBehavior.floating,
-                    backgroundColor: Colors.black,
-                  ),
-                );
-              },
+              onPressed: _saveSettings,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,
                 foregroundColor: Colors.white,

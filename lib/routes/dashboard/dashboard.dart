@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../products/product_form.dart';
 import '../scanner/scanner.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DashboardPage extends StatefulWidget {
   final Function(int)? onTapTab;
@@ -14,6 +15,7 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   bool _isLoading = true;
+  String _storeName = "Maria's Variety Store";
 
   int _totalProducts = 0;
   double _inventoryValue = 0.0;
@@ -23,7 +25,20 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
+    _loadStoreName();
     _fetchDashboardData();
+  }
+
+  Future<void> _loadStoreName() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final name = prefs.getString('store_name');
+      if (name != null && name.trim().isNotEmpty) {
+        setState(() {
+          _storeName = name.trim();
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _fetchDashboardData() async {
@@ -33,6 +48,7 @@ class _DashboardPageState extends State<DashboardPage> {
     });
 
     try {
+      await _loadStoreName();
       final supabase = Supabase.instance.client;
 
       // 1. Fetch products
@@ -106,7 +122,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             const SizedBox(height: 4),
             Text(
-              "Maria's Variety Store",
+              _storeName,
               style: GoogleFonts.inter(
                 fontSize: 28,
                 fontWeight: FontWeight.w800,
