@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import '../../utils/scanner_sound.dart';
 
 class CheckoutScannerPage extends StatefulWidget {
   final List<Map<String, dynamic>> dbProducts;
@@ -100,6 +101,7 @@ class _CheckoutScannerPageState extends State<CheckoutScannerPage> with SingleTi
       } else {
         _scannedQuantities[cleanCode] = currentCount + 1;
         _showFeedback('ADDED: $name (Qty: ${currentCount + 1})');
+        ScannerSound.playBeep();
       }
     });
   }

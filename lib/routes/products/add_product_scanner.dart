@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import '../../utils/scanner_sound.dart';
 
 class AddProductScannerPage extends StatefulWidget {
   const AddProductScannerPage({super.key});
@@ -42,6 +43,7 @@ class _AddProductScannerPageState extends State<AddProductScannerPage> with Sing
   void _onBarcodeDetected(String barcodeStr) {
     if (_isProcessing) return;
     _isProcessing = true;
+    ScannerSound.playBeep();
     Navigator.of(context).pop(barcodeStr);
   }
 

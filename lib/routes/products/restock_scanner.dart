@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'edit_product.dart';
+import '../../utils/scanner_sound.dart';
 
 class RestockScannerPage extends StatefulWidget {
   const RestockScannerPage({super.key});
@@ -85,6 +86,7 @@ class _RestockScannerPageState extends State<RestockScannerPage> with SingleTick
       } else {
         final product = barcodeData['products'];
         if (product != null && mounted) {
+          ScannerSound.playBeep();
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
