@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsPage extends StatefulWidget {
   final VoidCallback onBack;
@@ -19,6 +20,58 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _lowStockAlerts = true;
   bool _dailySalesSummary = false;
   int _globalReorderPoint = 10;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _storeNameController.text =
+            prefs.getString('store_name') ?? "Aling Nena's Sari-Sari";
+        _addressController.text =
+            prefs.getString('store_address') ?? "123 Balagtas St., Barangay 405, Sampaloc, Manila";
+        _lowStockAlerts = prefs.getBool('low_stock_alerts') ?? true;
+        _dailySalesSummary = prefs.getBool('daily_sales_summary') ?? false;
+        _globalReorderPoint = prefs.getInt('global_reorder_point') ?? 10;
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _saveSettings() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('store_name', _storeNameController.text.trim());
+      await prefs.setString('store_address', _addressController.text.trim());
+      await prefs.setBool('low_stock_alerts', _lowStockAlerts);
+      await prefs.setBool('daily_sales_summary', _dailySalesSummary);
+      await prefs.setInt('global_reorder_point', _globalReorderPoint);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Settings saved successfully!'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.black,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving settings: $e'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -61,15 +114,7 @@ class _SettingsPageState extends State<SettingsPage> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.save, color: Colors.black),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Settings saved successfully!'),
-                      behavior: SnackBarBehavior.floating,
-                      backgroundColor: Colors.black,
-                    ),
-                  );
-                },
+                onPressed: _saveSettings,
               ),
             ],
           ),
