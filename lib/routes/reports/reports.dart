@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ReportsPage extends StatefulWidget {
   const ReportsPage({super.key});
@@ -12,6 +13,8 @@ class ReportsPage extends StatefulWidget {
 class _ReportsPageState extends State<ReportsPage> {
   String _selectedPeriod = 'Weekly'; // Default tab
   bool _isLoading = true;
+  String _storeName = "Aling Nena's Sari-Sari";
+  String _storeAddress = "123 Balagtas St., Sampaloc, Manila";
 
   // Raw Database Results
   List<Map<String, dynamic>> _checkouts = [];
@@ -44,6 +47,10 @@ class _ReportsPageState extends State<ReportsPage> {
     });
 
     try {
+      final prefs = await SharedPreferences.getInstance();
+      _storeName = prefs.getString('store_name') ?? "Aling Nena's Sari-Sari";
+      _storeAddress = prefs.getString('store_address') ?? "123 Balagtas St., Sampaloc, Manila";
+
       final supabase = Supabase.instance.client;
 
       // 1. Fetch metadata products to lookup barcode to cost price mapping
@@ -305,6 +312,11 @@ class _ReportsPageState extends State<ReportsPage> {
                           '₱${(p['value'] as double).toStringAsFixed(2)}',
                           '${p['qty']} sold',
                         )),
+
+                  const SizedBox(height: 32),
+                  _buildSectionHeader('Recent Transactions'),
+                  const SizedBox(height: 12),
+                  _buildRecentTransactionsList(),
                 ],
               ),
             ),
@@ -572,6 +584,353 @@ class _ReportsPageState extends State<ReportsPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildRecentTransactionsList() {
+    if (_checkouts.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+          child: Text(
+            'NO TRANSACTIONS RECORDED',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: Colors.grey,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+    }
+
+    final list = List<Map<String, dynamic>>.from(_checkouts);
+    list.sort((a, b) {
+      final String aDate = a['created_at'] ?? '';
+      final String bDate = b['created_at'] ?? '';
+      return bDate.compareTo(aDate);
+    });
+
+    final recentList = list.take(10).toList();
+
+    return Column(
+      children: recentList.map((c) {
+        final String rawDate = c['created_at'] ?? '';
+        String formattedDate = '';
+        if (rawDate.isNotEmpty) {
+          try {
+            final dt = DateTime.parse(rawDate).toLocal();
+            final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            final month = months[dt.month - 1];
+            final day = dt.day;
+            final hour = dt.hour == 0 ? 12 : (dt.hour > 12 ? dt.hour - 12 : dt.hour);
+            final minute = dt.minute.toString().padLeft(2, '0');
+            final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+            formattedDate = '$month $day, ${dt.year} at $hour:$minute $ampm';
+          } catch (_) {
+            formattedDate = rawDate;
+          }
+        }
+        final double totalSale = (c['total_sale'] as num?)?.toDouble() ?? 0.0;
+        final String shortId = c['id']?.toString().split('-').first.toUpperCase() ?? 'N/A';
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: Colors.black, width: 2.0),
+          ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            title: Text(
+              'ORDER #$shortId',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w800,
+                fontSize: 14,
+                letterSpacing: 0.5,
+              ),
+            ),
+            subtitle: Text(
+              formattedDate,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '₱${totalSale.toStringAsFixed(2)}',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.black),
+              ],
+            ),
+            onTap: () => _showReceiptDialog(c),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  void _showReceiptDialog(Map<String, dynamic> checkout) {
+    final String rawDate = checkout['created_at'] ?? '';
+    String formattedDate = '';
+    if (rawDate.isNotEmpty) {
+      try {
+        final dt = DateTime.parse(rawDate).toLocal();
+        final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        final hour = dt.hour == 0 ? 12 : (dt.hour > 12 ? dt.hour - 12 : dt.hour);
+        final minute = dt.minute.toString().padLeft(2, '0');
+        final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+        formattedDate = '${months[dt.month - 1]} ${dt.day}, ${dt.year} - $hour:$minute $ampm';
+      } catch (_) {
+        formattedDate = rawDate;
+      }
+    }
+    final String receiptId = checkout['id']?.toString().toUpperCase() ?? 'N/A';
+    final double totalSale = (checkout['total_sale'] as num?)?.toDouble() ?? 0.0;
+    final sales = checkout['sale'] ?? [];
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.zero,
+            side: BorderSide(color: Colors.black, width: 3),
+          ),
+          child: Container(
+            color: Colors.white,
+            padding: const EdgeInsets.all(24),
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Text(
+                      _storeName.toUpperCase(),
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 18,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Center(
+                    child: Text(
+                      _storeAddress,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildReceiptDashedDivider(),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('DATE & TIME:', style: _receiptLabelStyle()),
+                      Text(formattedDate, style: _receiptValStyle()),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('RECEIPT ID:', style: _receiptLabelStyle()),
+                      Expanded(
+                        child: Text(
+                          receiptId,
+                          textAlign: TextAlign.right,
+                          style: _receiptValStyle().copyWith(fontSize: 9),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildReceiptDashedDivider(),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(flex: 3, child: Text('ITEM DESCRIPTION', style: _receiptLabelStyle())),
+                      Expanded(flex: 1, child: Text('QTY', textAlign: TextAlign.center, style: _receiptLabelStyle())),
+                      Expanded(flex: 2, child: Text('PRICE', textAlign: TextAlign.right, style: _receiptLabelStyle())),
+                      Expanded(flex: 2, child: Text('TOTAL', textAlign: TextAlign.right, style: _receiptLabelStyle())),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Container(height: 1, color: Colors.grey.shade400),
+                  const SizedBox(height: 8),
+                  if (sales is List)
+                    ...sales.map((s) {
+                      final String barcode = (s['product_barcode'] ?? '').toString();
+                      final int qty = (s['qty_item'] as num?)?.toInt() ?? 0;
+                      final double itemTotal = (s['total_price'] as num?)?.toDouble() ?? 0.0;
+                      
+                      final prod = _barcodeToProduct[barcode];
+                      final String name = prod != null 
+                          ? (prod['name'] ?? '').toString().toUpperCase()
+                          : 'BARCODE:$barcode';
+                      
+                      final double unitPrice = qty > 0 ? itemTotal / qty : 0.0;
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                name,
+                                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 1,
+                              child: Text(
+                                '$qty',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.inter(fontSize: 12),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                '₱${unitPrice.toStringAsFixed(2)}',
+                                textAlign: TextAlign.right,
+                                style: GoogleFonts.inter(fontSize: 12),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                '₱${itemTotal.toStringAsFixed(2)}',
+                                textAlign: TextAlign.right,
+                                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  const SizedBox(height: 16),
+                  _buildReceiptDashedDivider(),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'TOTAL AMOUNT:',
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15,
+                        ),
+                      ),
+                      Text(
+                        '₱${totalSale.toStringAsFixed(2)}',
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  _buildReceiptDashedDivider(),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: Text(
+                      'THANK YOU FOR YOUR PATRONAGE!',
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 11,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Center(
+                    child: Text(
+                      'SariApp POS - Official Receipt',
+                      style: GoogleFonts.inter(
+                        fontSize: 9,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.zero,
+                        side: BorderSide(color: Colors.black, width: 2),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: Text(
+                      'CLOSE RECEIPT',
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  TextStyle _receiptLabelStyle() {
+    return GoogleFonts.inter(
+      fontSize: 10,
+      fontWeight: FontWeight.w800,
+      color: Colors.grey.shade500,
+      letterSpacing: 0.5,
+    );
+  }
+
+  TextStyle _receiptValStyle() {
+    return GoogleFonts.inter(
+      fontSize: 12,
+      fontWeight: FontWeight.w700,
+      color: Colors.black,
+    );
+  }
+
+  Widget _buildReceiptDashedDivider() {
+    return Row(
+      children: List.generate(40, (index) {
+        return Expanded(
+          child: Container(
+            color: index % 2 == 0 ? Colors.transparent : Colors.grey.shade400,
+            height: 1.5,
+          ),
+        );
+      }),
     );
   }
 }
