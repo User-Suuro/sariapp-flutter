@@ -38,6 +38,7 @@ dependencies:
   supabase_flutter: ^2.15.0
   flutter_dotenv: ^6.0.1
   image_picker: ^1.2.3
+  mobile_scanner: ^5.1.1
 
 dev_dependencies:
   flutter_test:

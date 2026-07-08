@@ -1,156 +1,235 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../products/product_form.dart';
-import '../products/edit_product.dart';
 import '../scanner/scanner.dart';
 
-class DashboardPage extends StatelessWidget {
-  const DashboardPage({super.key});
+class DashboardPage extends StatefulWidget {
+  final Function(int)? onTapTab;
+  const DashboardPage({super.key, this.onTapTab});
+
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  bool _isLoading = true;
+
+  int _totalProducts = 0;
+  double _inventoryValue = 0.0;
+  double _todaySales = 0.0;
+  int _lowStockItems = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDashboardData();
+  }
+
+  Future<void> _fetchDashboardData() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final supabase = Supabase.instance.client;
+
+      // 1. Fetch products
+      final productsData = await supabase.from('products').select('*');
+      final products = List<Map<String, dynamic>>.from(productsData);
+
+      _totalProducts = products.length;
+
+      double valueSum = 0.0;
+      int lowStockCount = 0;
+
+      for (final p in products) {
+        final int qty = (p['qty'] as num?)?.toInt() ?? 0;
+        final double costPrice = (p['price'] as num?)?.toDouble() ?? 0.0;
+        valueSum += costPrice * qty;
+
+        final int alertAt = (p['min_stock'] as num?)?.toInt() ?? 10;
+        if (qty <= alertAt) {
+          lowStockCount++;
+        }
+      }
+
+      _inventoryValue = valueSum;
+      _lowStockItems = lowStockCount;
+
+      // 2. Fetch today's sales
+      final now = DateTime.now();
+      final startOfToday = DateTime(now.year, now.month, now.day);
+      final salesData = await supabase
+          .from('checkout')
+          .select('total_sale')
+          .gte('created_at', startOfToday.toUtc().toIso8601String());
+
+      double salesSum = 0.0;
+      for (final sale in salesData) {
+        salesSum += (sale['total_sale'] as num?)?.toDouble() ?? 0.0;
+      }
+      _todaySales = salesSum;
+
+    } catch (e) {
+      debugPrint('Dashboard data fetch error: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Greeting Section
-          Text(
-            'WELCOME BACK,',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade500,
-              letterSpacing: 2.0,
+    return RefreshIndicator(
+      onRefresh: _fetchDashboardData,
+      color: Colors.black,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Greeting Section
+            Text(
+              'WELCOME BACK,',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade500,
+                letterSpacing: 2.0,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            "Maria's Variety Store",
-            style: GoogleFonts.inter(
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              color: Colors.black,
+            const SizedBox(height: 4),
+            Text(
+              "Maria's Variety Store",
+              style: GoogleFonts.inter(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                color: Colors.black,
+              ),
             ),
-          ),
-          const SizedBox(height: 32),
-
-          // Stat Cards Grid (2x2)
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 1.1,
-            children: [
-              _buildStatCard(
-                title: 'Total Products',
-                value: '142',
-                icon: Icons.inventory_2_outlined,
-                backgroundColor: const Color(0xFFEEEEEE),
-                textColor: Colors.black,
-              ),
-              _buildStatCard(
-                title: 'Inv. Value',
-                value: '₱24,500',
-                icon: Icons.account_balance_wallet_outlined,
-                backgroundColor: const Color(0xFFEEEEEE),
-                textColor: Colors.black,
-              ),
-              _buildStatCard(
-                title: 'Today\'s Sales',
-                value: '₱3,240',
-                icon: Icons.trending_up,
-                backgroundColor: Colors.black,
-                textColor: Colors.white,
-                isHighlighted: true,
-              ),
-              _buildStatCard(
-                title: 'Low Stock',
-                value: '5 Items',
-                icon: Icons.error_outline,
-                backgroundColor: const Color(0xFFEEEEEE),
-                textColor: const Color(0xFFBA1A1A),
-                iconColor: const Color(0xFFBA1A1A),
-                borderColor: const Color(0xFFBA1A1A).withValues(alpha: 0.3),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-
-          // Store Operations Section
-          Text(
-            'Store Operations',
-            style: GoogleFonts.inter(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildOperationButton(
-            label: 'Scan Product',
-            icon: Icons.barcode_reader,
-            isPrimary: true,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ScannerPage()),
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildOperationButton(
-                  label: 'Add New Product',
-                  icon: Icons.add_circle_outline,
-                  isPrimary: false,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ProductForm(),
-                      ),
-                    );
-                  },
+            const SizedBox(height: 32),
+  
+            // Stat Cards Grid (2x2)
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.1,
+              children: [
+                _buildStatCard(
+                  title: 'Total Products',
+                  value: _isLoading ? '...' : '$_totalProducts',
+                  icon: Icons.inventory_2_outlined,
+                  backgroundColor: const Color(0xFFEEEEEE),
+                  textColor: Colors.black,
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildOperationButton(
-                  label: 'Restock Inventory',
-                  icon: Icons.history,
-                  isPrimary: false,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const EditProductPage(),
-                      ),
-                    );
-                  },
+                _buildStatCard(
+                  title: 'Inv. Value',
+                  value: _isLoading ? '...' : '₱${_inventoryValue.toStringAsFixed(0)}',
+                  icon: Icons.account_balance_wallet_outlined,
+                  backgroundColor: const Color(0xFFEEEEEE),
+                  textColor: Colors.black,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-
-          // Monthly Insight Section
-          Text(
-            'Monthly Insight',
-            style: GoogleFonts.inter(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: Colors.black,
+                _buildStatCard(
+                  title: 'Today\'s Sales',
+                  value: _isLoading ? '...' : '₱${_todaySales.toStringAsFixed(0)}',
+                  icon: Icons.trending_up,
+                  backgroundColor: Colors.black,
+                  textColor: Colors.white,
+                  isHighlighted: true,
+                ),
+                _buildStatCard(
+                  title: 'Low Stock',
+                  value: _isLoading ? '...' : '$_lowStockItems Items',
+                  icon: Icons.error_outline,
+                  backgroundColor: const Color(0xFFEEEEEE),
+                  textColor: const Color(0xFFBA1A1A),
+                  iconColor: const Color(0xFFBA1A1A),
+                  borderColor: const Color(0xFFBA1A1A).withOpacity(0.3),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 16),
-          _buildInsightCard(tip: 'Keep your best-sellers at eye level.'),
-          const SizedBox(height: 24),
-        ],
+            const SizedBox(height: 32),
+  
+            // Store Operations Section
+            Text(
+              'Store Operations',
+              style: GoogleFonts.inter(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildOperationButton(
+              label: 'Scan Product',
+              icon: Icons.barcode_reader,
+              isPrimary: true,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ScannerPage()),
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildOperationButton(
+                    label: 'Add New Product',
+                    icon: Icons.add_circle_outline,
+                    isPrimary: false,
+                    onTap: () async {
+                      final added = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ProductForm(),
+                        ),
+                      );
+                      if (added == true) {
+                        _fetchDashboardData();
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildOperationButton(
+                    label: 'Restock Inventory',
+                    icon: Icons.history,
+                    isPrimary: false,
+                    onTap: () {
+                      widget.onTapTab?.call(1); // Navigates to Products tab
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+  
+            // Monthly Insight Section
+            Text(
+              'Monthly Insight',
+              style: GoogleFonts.inter(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildInsightCard(tip: 'Keep your best-sellers at eye level.'),
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }
@@ -194,7 +273,7 @@ class DashboardPage extends StatelessWidget {
                 title,
                 style: GoogleFonts.inter(
                   fontSize: 12,
-                  color: textColor.withValues(alpha: isHighlighted ? 0.7 : 0.6),
+                  color: textColor.withOpacity(isHighlighted ? 0.7 : 0.6),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -248,14 +327,8 @@ class DashboardPage extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: Colors.grey.shade200,
-        image: const DecorationImage(
-          image: NetworkImage(
-            'https://images.unsplash.com/photo-1534452285072-8e90f4bd54ed?q=80&w=600',
-          ), // Placeholder for store shelf
-          fit: BoxFit.cover,
-          colorFilter: ColorFilter.mode(Colors.black54, BlendMode.darken),
-        ),
+        color: Colors.black,
+        border: Border.all(color: Colors.black, width: 2.0),
       ),
       child: Padding(
         padding: const EdgeInsets.all(24.0),

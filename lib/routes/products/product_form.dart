@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sariapp/utils/validator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'add_product_scanner.dart';
 
 class ProductForm extends StatefulWidget {
   const ProductForm({super.key});
@@ -361,14 +362,18 @@ class _ProductFormState extends State<ProductForm> {
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Barcode scanner helper starting...'),
-                            behavior: SnackBarBehavior.floating,
-                            backgroundColor: Colors.black,
+                      onPressed: () async {
+                        final String? scannedBarcode = await Navigator.push<String>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AddProductScannerPage(),
                           ),
                         );
+                        if (scannedBarcode != null && scannedBarcode.isNotEmpty) {
+                          setState(() {
+                            _barcodeController.text = scannedBarcode;
+                          });
+                        }
                       },
                       icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
                       label: Text(

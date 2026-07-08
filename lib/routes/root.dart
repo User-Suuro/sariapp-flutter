@@ -50,7 +50,7 @@ class _MyRootPageState extends State<MyRootPage> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = <Widget>[
-      const DashboardPage(),
+      DashboardPage(onTapTab: _onItemTapped),
       const ProductsPage(),
       const CheckoutPage(),
       const ReportsPage(),

@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'product_form.dart';
 import 'edit_product.dart';
+import 'restock_scanner.dart';
 
 class ProductsPage extends StatefulWidget {
   const ProductsPage({super.key});
@@ -134,7 +135,15 @@ class _ProductsPageState extends State<ProductsPage> {
                           Icons.qr_code_scanner,
                           color: Colors.black,
                         ),
-                        onPressed: () {},
+                        onPressed: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const RestockScannerPage(),
+                            ),
+                          );
+                          _fetchProducts();
+                        },
                       ),
                     ),
                   ),
