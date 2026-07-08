@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../utils/notifications_helper.dart';
 
 class SettingsPage extends StatefulWidget {
   final VoidCallback onBack;
@@ -318,6 +319,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     setState(() {
                       _lowStockAlerts = val;
                     });
+                    if (val) {
+                      NotificationsHelper.requestPermission();
+                    }
                   },
                 ),
               ],

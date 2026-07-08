@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'checkout_scanner.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../utils/notifications_helper.dart';
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -126,6 +128,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
         }
       }
 
+      // Check if low stock notifications are enabled
+      final prefs = await SharedPreferences.getInstance();
+      final bool lowStockEnabled = prefs.getBool('low_stock_alerts') ?? true;
+
       // 3. Update stock levels
       for (final item in _cartItems) {
         final product = item['product'];
@@ -137,6 +143,17 @@ class _CheckoutPageState extends State<CheckoutPage> {
             .from('products')
             .update({'qty': newStock})
             .eq('id', product['id']);
+
+        if (lowStockEnabled) {
+          final int threshold = product['min_stock'] ?? 10;
+          if (newStock <= threshold) {
+            final String name = (product['name'] ?? 'Unknown Item').toString().toUpperCase();
+            await NotificationsHelper.showNotification(
+              title: 'LOW STOCK WARNING!',
+              body: '$name is running low ($newStock left).',
+            );
+          }
+        }
       }
 
       if (mounted) {
