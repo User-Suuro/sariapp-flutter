@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'checkout_scanner.dart';
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -442,12 +443,73 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     label: 'SCAN PRODUCT',
                     icon: Icons.barcode_reader,
                     isPrimary: true,
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Barcode scanner functionality is in scan flow.'),
+                    onTap: () async {
+                      if (_isLoadingProducts) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please wait, loading products...')),
+                        );
+                        return;
+                      }
+                      final Map<String, int>? scanned = await Navigator.push<Map<String, int>>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CheckoutScannerPage(dbProducts: _dbProducts),
                         ),
                       );
+                      if (scanned != null && scanned.isNotEmpty) {
+                        setState(() {
+                          scanned.forEach((barcode, qty) {
+                            Map<String, dynamic>? targetProd;
+                            for (final p in _dbProducts) {
+                              final barcodes = p['product_barcode'];
+                              if (barcodes is List) {
+                                for (final bc in barcodes) {
+                                  if (bc['id'].toString().trim() == barcode.trim()) {
+                                    targetProd = p;
+                                    break;
+                                  }
+                                }
+                              } else if (barcodes is Map) {
+                                if (barcodes['id'].toString().trim() == barcode.trim()) {
+                                  targetProd = p;
+                                }
+                              }
+                              if (targetProd != null) break;
+                            }
+
+                            if (targetProd != null) {
+                              final double sellingPrice = (targetProd!['price_sale'] as num?)?.toDouble() ?? 
+                                                         (targetProd!['price'] as num?)?.toDouble() ?? 0.0;
+                              final String name = (targetProd!['name'] ?? '').toString();
+                              final int availableStock = targetProd!['qty'] ?? 0;
+
+                              final existingIndex = _cartItems.indexWhere((item) => 
+                                item['product']['id'] == targetProd!['id']);
+
+                              if (existingIndex != -1) {
+                                final int currentQtyInCart = _cartItems[existingIndex]['qty'] as int;
+                                final int combinedQty = currentQtyInCart + qty;
+                                if (combinedQty <= availableStock) {
+                                  _cartItems[existingIndex]['qty'] = combinedQty;
+                                } else {
+                                  _cartItems[existingIndex]['qty'] = availableStock;
+                                }
+                              } else {
+                                final int clampedQty = qty <= availableStock ? qty : availableStock;
+                                if (clampedQty > 0) {
+                                  _cartItems.add({
+                                    'name': name.toUpperCase(),
+                                    'price': sellingPrice,
+                                    'qty': clampedQty,
+                                    'product': targetProd,
+                                    'barcode': barcode,
+                                  });
+                                }
+                              }
+                            }
+                          });
+                        });
+                      }
                     },
                   ),
                 ),
