@@ -236,8 +236,8 @@ class _ProductsPageState extends State<ProductsPage> {
         0.0;
     final double costPrice = (product['price'] as num?)?.toDouble() ?? 0.0;
 
-    // Use alertAt/alert_at if defined, otherwise defaults
-    final int alertAt = product['alert_at'] ?? product['alertAt'] ?? 10;
+    // Use min_stock/alert_at/alertAt if defined, otherwise defaults
+    final int alertAt = product['min_stock'] ?? product['alert_at'] ?? product['alertAt'] ?? 10;
     final bool isCritical = stock <= 3;
     final bool isLow = stock <= alertAt && stock > 3;
 

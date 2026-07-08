@@ -247,6 +247,7 @@ class _ProductFormState extends State<ProductForm> {
       final costPrice = double.tryParse(_costPriceController.text) ?? 0.0;
       final sellingPrice = double.tryParse(_sellingPriceController.text) ?? 0.0;
       final category = _selectedCategory;
+      final alertAt = int.tryParse(_alertAtController.text) ?? 10;
 
       // Insert product and query returned id
       final response = await Supabase.instance.client.from('products').insert({
@@ -256,6 +257,7 @@ class _ProductFormState extends State<ProductForm> {
         'price': costPrice,
         'price_sale': sellingPrice,
         'category': category,
+        'min_stock': alertAt,
       }).select('id').single();
 
       final insertedId = response['id'];
