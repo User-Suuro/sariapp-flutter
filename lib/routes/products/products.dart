@@ -288,7 +288,10 @@ class _ProductsPageState extends State<ProductsPage> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Row(
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
                       stockLabel,
@@ -298,7 +301,6 @@ class _ProductsPageState extends State<ProductsPage> {
                         color: stockColor,
                       ),
                     ),
-                    const SizedBox(width: 12),
                     Text(
                       '₱${sellingPrice.toStringAsFixed(2)}',
                       style: GoogleFonts.inter(
@@ -307,8 +309,7 @@ class _ProductsPageState extends State<ProductsPage> {
                         color: Colors.black,
                       ),
                     ),
-                    if (costPrice > 0 && costPrice != sellingPrice) ...[
-                      const SizedBox(width: 8),
+                    if (costPrice > 0 && costPrice != sellingPrice)
                       Text(
                         'Cost: ₱${costPrice.toStringAsFixed(2)}',
                         style: GoogleFonts.inter(
@@ -317,7 +318,6 @@ class _ProductsPageState extends State<ProductsPage> {
                           color: Colors.grey.shade600,
                         ),
                       ),
-                    ],
                   ],
                 ),
               ],

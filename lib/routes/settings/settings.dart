@@ -131,12 +131,8 @@ class _SettingsPageState extends State<SettingsPage> {
               children: [
                 _buildSectionHeader('Store Profile'),
                 _buildStoreProfileCard(),
-                const SizedBox(height: 32),
                 _buildSectionHeader('Notification Settings'),
                 _buildNotificationSettingsCard(),
-                const SizedBox(height: 32),
-                _buildSectionHeader('Inventory Thresholds'),
-                _buildInventoryThresholdsCard(),
                 const SizedBox(height: 32),
                 _buildSectionHeader('Data Management'),
                 _buildDataManagementCard(),
@@ -297,173 +293,35 @@ class _SettingsPageState extends State<SettingsPage> {
         color: Colors.white,
         border: Border.all(color: Colors.black, width: 2.0),
       ),
-      child: Column(
-        children: [
-          Container(
-            height: 56,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Low stock alerts',
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.black,
-                  ),
-                ),
-                _buildBrutalistToggle(
-                  value: _lowStockAlerts,
-                  onChanged: (val) {
-                    setState(() {
-                      _lowStockAlerts = val;
-                    });
-                    if (val) {
-                      NotificationsHelper.requestPermission();
-                    }
-                  },
-                ),
-              ],
+      child: Container(
+        height: 56,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Low stock alerts',
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: Colors.black,
+              ),
             ),
-          ),
-          Container(height: 2, color: Colors.black),
-          Container(
-            height: 56,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Daily Sales Summary',
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.black,
-                  ),
-                ),
-                _buildBrutalistToggle(
-                  value: _dailySalesSummary,
-                  onChanged: (val) {
-                    setState(() {
-                      _dailySalesSummary = val;
-                    });
-                  },
-                ),
-              ],
+            _buildBrutalistToggle(
+              value: _lowStockAlerts,
+              onChanged: (val) {
+                setState(() {
+                  _lowStockAlerts = val;
+                });
+                if (val) {
+                  NotificationsHelper.requestPermission();
+                }
+              },
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
-  }
-
-  Widget _buildInventoryThresholdsCard() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.black, width: 2.0),
-      ),
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Global Reorder Point',
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.black,
-                ),
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black, width: 2.0),
-                ),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        if (_globalReorderPoint > 0) {
-                          setState(() {
-                            _globalReorderPoint--;
-                          });
-                        }
-                      },
-                      child: Container(
-                        width: 48,
-                        height: 40,
-                        color: const Color(0xFFEEEEEE),
-                        alignment: Alignment.center,
-                        child: const Text(
-                          '-',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Container(width: 2, height: 40, color: Colors.black),
-                    Container(
-                      width: 56,
-                      height: 40,
-                      alignment: Alignment.center,
-                      child: Text(
-                        '$_globalReorderPoint',
-                        style: GoogleFonts.inter(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
-                    Container(width: 2, height: 40, color: Colors.black),
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _globalReorderPoint++;
-                        });
-                      },
-                      child: Container(
-                        width: 48,
-                        height: 40,
-                        color: const Color(0xFFEEEEEE),
-                        alignment: Alignment.center,
-                        child: const Text(
-                          '+',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'You will be notified when items reach this quantity.',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-              fontStyle: FontStyle.italic,
-              color: const Color(0xFF4C4546),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildDataManagementCard() {
     return SizedBox(
       width: double.infinity,
