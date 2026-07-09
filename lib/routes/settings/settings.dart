@@ -322,6 +322,8 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ),
     );
+  }
+
   Widget _buildDataManagementCard() {
     return SizedBox(
       width: double.infinity,
