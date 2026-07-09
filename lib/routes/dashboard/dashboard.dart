@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../products/product_form.dart';
-import '../scanner/scanner.dart';
+import '../products/restock_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -87,7 +87,6 @@ class _DashboardPageState extends State<DashboardPage> {
         salesSum += (sale['total_sale'] as num?)?.toDouble() ?? 0.0;
       }
       _todaySales = salesSum;
-
     } catch (e) {
       debugPrint('Dashboard data fetch error: $e');
     } finally {
@@ -130,7 +129,7 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
             const SizedBox(height: 32),
-  
+
             // Stat Cards Grid (2x2)
             GridView.count(
               shrinkWrap: true,
@@ -149,14 +148,18 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 _buildStatCard(
                   title: 'Inv. Value',
-                  value: _isLoading ? '...' : '₱${_inventoryValue.toStringAsFixed(0)}',
+                  value: _isLoading
+                      ? '...'
+                      : '₱${_inventoryValue.toStringAsFixed(0)}',
                   icon: Icons.account_balance_wallet_outlined,
                   backgroundColor: const Color(0xFFEEEEEE),
                   textColor: Colors.black,
                 ),
                 _buildStatCard(
                   title: 'Today\'s Sales',
-                  value: _isLoading ? '...' : '₱${_todaySales.toStringAsFixed(0)}',
+                  value: _isLoading
+                      ? '...'
+                      : '₱${_todaySales.toStringAsFixed(0)}',
                   icon: Icons.trending_up,
                   backgroundColor: Colors.black,
                   textColor: Colors.white,
@@ -174,7 +177,7 @@ class _DashboardPageState extends State<DashboardPage> {
               ],
             ),
             const SizedBox(height: 32),
-  
+
             // Store Operations Section
             Text(
               'Store Operations',
@@ -192,7 +195,9 @@ class _DashboardPageState extends State<DashboardPage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const ScannerPage()),
+                  MaterialPageRoute(
+                    builder: (context) => const RestockScannerPage(),
+                  ),
                 );
               },
             ),
@@ -231,7 +236,7 @@ class _DashboardPageState extends State<DashboardPage> {
               ],
             ),
             const SizedBox(height: 32),
-  
+
             // Monthly Insight Section
             Text(
               'Monthly Insight',

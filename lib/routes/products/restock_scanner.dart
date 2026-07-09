@@ -12,7 +12,8 @@ class RestockScannerPage extends StatefulWidget {
   State<RestockScannerPage> createState() => _RestockScannerPageState();
 }
 
-class _RestockScannerPageState extends State<RestockScannerPage> with SingleTickerProviderStateMixin {
+class _RestockScannerPageState extends State<RestockScannerPage>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
   final TextEditingController _barcodeInputController = TextEditingController();
@@ -140,7 +141,9 @@ class _RestockScannerPageState extends State<RestockScannerPage> with SingleTick
           decoration: InputDecoration(
             hintText: 'Enter numerical code...',
             hintStyle: GoogleFonts.inter(color: Colors.grey),
-            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.black)),
+            focusedBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.black),
+            ),
           ),
         ),
         actions: [
@@ -148,7 +151,10 @@ class _RestockScannerPageState extends State<RestockScannerPage> with SingleTick
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
               'CANCEL',
-              style: GoogleFonts.inter(color: Colors.grey, fontWeight: FontWeight.bold),
+              style: GoogleFonts.inter(
+                color: Colors.grey,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           TextButton(
@@ -162,7 +168,10 @@ class _RestockScannerPageState extends State<RestockScannerPage> with SingleTick
             },
             child: Text(
               'LOOKUP',
-              style: GoogleFonts.inter(color: Colors.black, fontWeight: FontWeight.bold),
+              style: GoogleFonts.inter(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -185,7 +194,10 @@ class _RestockScannerPageState extends State<RestockScannerPage> with SingleTick
             children: [
               Text(
                 'REGISTERED BARCODES (SIMULATION)',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 14),
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                ),
               ),
               const SizedBox(height: 12),
               if (_registeredBarcodes.isEmpty)
@@ -244,14 +256,18 @@ class _RestockScannerPageState extends State<RestockScannerPage> with SingleTick
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: Colors.white,
+            size: 20,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         title: Text(
-          'RESTOCK SCANNER',
+          'BARCODE SCANNER',
           style: GoogleFonts.inter(
             color: Colors.white,
             fontSize: 14,
@@ -283,11 +299,18 @@ class _RestockScannerPageState extends State<RestockScannerPage> with SingleTick
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.videocam_off, color: Colors.white54, size: 40),
+                        const Icon(
+                          Icons.videocam_off,
+                          color: Colors.white54,
+                          size: 40,
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           'Camera access not active or not allowed.',
-                          style: GoogleFonts.inter(color: Colors.white60, fontSize: 13),
+                          style: GoogleFonts.inter(
+                            color: Colors.white60,
+                            fontSize: 13,
+                          ),
                         ),
                       ],
                     ),
@@ -353,7 +376,10 @@ class _RestockScannerPageState extends State<RestockScannerPage> with SingleTick
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 40),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withOpacity(0.6),
                         borderRadius: BorderRadius.circular(12),
@@ -416,16 +442,28 @@ class _RestockScannerPageState extends State<RestockScannerPage> with SingleTick
         height: 30,
         decoration: BoxDecoration(
           border: Border(
-            top: top ? const BorderSide(color: Colors.white, width: 4) : BorderSide.none,
-            bottom: bottom ? const BorderSide(color: Colors.white, width: 4) : BorderSide.none,
-            left: left ? const BorderSide(color: Colors.white, width: 4) : BorderSide.none,
-            right: right ? const BorderSide(color: Colors.white, width: 4) : BorderSide.none,
+            top: top
+                ? const BorderSide(color: Colors.white, width: 4)
+                : BorderSide.none,
+            bottom: bottom
+                ? const BorderSide(color: Colors.white, width: 4)
+                : BorderSide.none,
+            left: left
+                ? const BorderSide(color: Colors.white, width: 4)
+                : BorderSide.none,
+            right: right
+                ? const BorderSide(color: Colors.white, width: 4)
+                : BorderSide.none,
           ),
           borderRadius: BorderRadius.only(
             topLeft: top && left ? const Radius.circular(20) : Radius.zero,
             topRight: top && right ? const Radius.circular(20) : Radius.zero,
-            bottomLeft: bottom && left ? const Radius.circular(20) : Radius.zero,
-            bottomRight: bottom && right ? const Radius.circular(20) : Radius.zero,
+            bottomLeft: bottom && left
+                ? const Radius.circular(20)
+                : Radius.zero,
+            bottomRight: bottom && right
+                ? const Radius.circular(20)
+                : Radius.zero,
           ),
         ),
       ),
