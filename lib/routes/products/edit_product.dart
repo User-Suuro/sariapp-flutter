@@ -12,7 +12,7 @@ class EditProductPage extends StatefulWidget {
 
 class _EditProductPageState extends State<EditProductPage> {
   final _formKey = GlobalKey<FormState>();
-  final _quantityController = TextEditingController(text: '24');
+  final _quantityController = TextEditingController(text: '0');
   final _costPriceController = TextEditingController();
   final _sellingPriceController = TextEditingController();
 
@@ -26,7 +26,8 @@ class _EditProductPageState extends State<EditProductPage> {
     if (widget.product != null) {
       _currentStock = widget.product!['qty'] ?? 0;
       _costPriceController.text = (widget.product!['price'] ?? 0.0).toString();
-      _sellingPriceController.text = (widget.product!['price_sale'] ?? 0.0).toString();
+      _sellingPriceController.text = (widget.product!['price_sale'] ?? 0.0)
+          .toString();
     } else {
       _currentStock = 0;
       _loadFallbackProduct();
@@ -43,8 +44,10 @@ class _EditProductPageState extends State<EditProductPage> {
         setState(() {
           _fallbackProduct = data.first;
           _currentStock = _fallbackProduct!['qty'] ?? 0;
-          _costPriceController.text = (_fallbackProduct!['price'] ?? 0.0).toString();
-          _sellingPriceController.text = (_fallbackProduct!['price_sale'] ?? 0.0).toString();
+          _costPriceController.text = (_fallbackProduct!['price'] ?? 0.0)
+              .toString();
+          _sellingPriceController.text =
+              (_fallbackProduct!['price_sale'] ?? 0.0).toString();
         });
       }
     } catch (_) {}
@@ -208,10 +211,15 @@ class _EditProductPageState extends State<EditProductPage> {
             ),
           ),
           child: AppBar(
-            backgroundColor: _isFlashing ? Colors.black : const Color(0xFFF9F9F9),
+            backgroundColor: _isFlashing
+                ? Colors.black
+                : const Color(0xFFF9F9F9),
             elevation: 0,
             leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: _isFlashing ? Colors.white : Colors.black),
+              icon: Icon(
+                Icons.arrow_back,
+                color: _isFlashing ? Colors.white : Colors.black,
+              ),
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(
@@ -241,7 +249,10 @@ class _EditProductPageState extends State<EditProductPage> {
               child: Center(
                 child: Container(
                   constraints: const BoxConstraints(maxWidth: 500),
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 24.0,
+                  ),
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -261,7 +272,10 @@ class _EditProductPageState extends State<EditProductPage> {
                                 ),
                               );
                             },
-                            icon: const Icon(Icons.qr_code_scanner, color: Colors.black),
+                            icon: const Icon(
+                              Icons.qr_code_scanner,
+                              color: Colors.black,
+                            ),
                             label: Text(
                               'SCAN BARCODE',
                               style: GoogleFonts.inter(
@@ -275,7 +289,10 @@ class _EditProductPageState extends State<EditProductPage> {
                               backgroundColor: const Color(0xFFF9F9F9),
                               foregroundColor: Colors.black,
                               elevation: 0,
-                              side: const BorderSide(color: Colors.black, width: 2.0),
+                              side: const BorderSide(
+                                color: Colors.black,
+                                width: 2.0,
+                              ),
                               shape: const RoundedRectangleBorder(
                                 borderRadius: BorderRadius.zero,
                               ),
@@ -283,7 +300,7 @@ class _EditProductPageState extends State<EditProductPage> {
                           ),
                         ),
                         const SizedBox(height: 32),
-                        
+
                         // Product Summary Card
                         Container(
                           width: double.infinity,
@@ -305,10 +322,13 @@ class _EditProductPageState extends State<EditProductPage> {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                               Text(
+                              Text(
                                 () {
-                                  final targetProduct = widget.product ?? _fallbackProduct;
-                                  return targetProduct != null ? (targetProduct['name'] ?? '').toString() : 'LOADING...';
+                                  final targetProduct =
+                                      widget.product ?? _fallbackProduct;
+                                  return targetProduct != null
+                                      ? (targetProduct['name'] ?? '').toString()
+                                      : 'LOADING...';
                                 }(),
                                 style: GoogleFonts.inter(
                                   fontSize: 20,
@@ -319,17 +339,27 @@ class _EditProductPageState extends State<EditProductPage> {
                               const SizedBox(height: 8),
                               Row(
                                 children: [
-                                  const Icon(Icons.qr_code, color: Color(0xFF5D5F5F), size: 18),
+                                  const Icon(
+                                    Icons.qr_code,
+                                    color: Color(0xFF5D5F5F),
+                                    size: 18,
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(
                                     () {
-                                      final targetProduct = widget.product ?? _fallbackProduct;
-                                      if (targetProduct == null) return 'LOADING...';
-                                      final barcodes = targetProduct['product_barcode'];
-                                      if (barcodes is List && barcodes.isNotEmpty) {
-                                        return barcodes[0]['id']?.toString() ?? 'NO BARCODE';
+                                      final targetProduct =
+                                          widget.product ?? _fallbackProduct;
+                                      if (targetProduct == null)
+                                        return 'LOADING...';
+                                      final barcodes =
+                                          targetProduct['product_barcode'];
+                                      if (barcodes is List &&
+                                          barcodes.isNotEmpty) {
+                                        return barcodes[0]['id']?.toString() ??
+                                            'NO BARCODE';
                                       } else if (barcodes is Map) {
-                                        return barcodes['id']?.toString() ?? 'NO BARCODE';
+                                        return barcodes['id']?.toString() ??
+                                            'NO BARCODE';
                                       }
                                       return 'NO BARCODE';
                                     }(),
@@ -387,12 +417,20 @@ class _EditProductPageState extends State<EditProductPage> {
                                   _buildFieldLabel('Cost Price'),
                                   TextFormField(
                                     controller: _costPriceController,
-                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                    style: GoogleFonts.inter(fontSize: 16, color: Colors.black),
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
+                                    style: GoogleFonts.inter(
+                                      fontSize: 16,
+                                      color: Colors.black,
+                                    ),
                                     decoration: _inputDecoration(
                                       hintText: '0.00',
                                       prefix: Padding(
-                                        padding: const EdgeInsets.only(right: 8.0),
+                                        padding: const EdgeInsets.only(
+                                          right: 8.0,
+                                        ),
                                         child: Text(
                                           '₱',
                                           style: GoogleFonts.inter(
@@ -403,7 +441,8 @@ class _EditProductPageState extends State<EditProductPage> {
                                         ),
                                       ),
                                     ),
-                                    validator: (val) => _validatePrice(val, 'Cost Price'),
+                                    validator: (val) =>
+                                        _validatePrice(val, 'Cost Price'),
                                   ),
                                 ],
                               ),
@@ -416,12 +455,20 @@ class _EditProductPageState extends State<EditProductPage> {
                                   _buildFieldLabel('Selling Price'),
                                   TextFormField(
                                     controller: _sellingPriceController,
-                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                    style: GoogleFonts.inter(fontSize: 16, color: Colors.black),
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
+                                    style: GoogleFonts.inter(
+                                      fontSize: 16,
+                                      color: Colors.black,
+                                    ),
                                     decoration: _inputDecoration(
                                       hintText: '0.00',
                                       prefix: Padding(
-                                        padding: const EdgeInsets.only(right: 8.0),
+                                        padding: const EdgeInsets.only(
+                                          right: 8.0,
+                                        ),
                                         child: Text(
                                           '₱',
                                           style: GoogleFonts.inter(
@@ -432,7 +479,8 @@ class _EditProductPageState extends State<EditProductPage> {
                                         ),
                                       ),
                                     ),
-                                    validator: (val) => _validatePrice(val, 'Selling Price'),
+                                    validator: (val) =>
+                                        _validatePrice(val, 'Selling Price'),
                                   ),
                                 ],
                               ),
@@ -457,11 +505,17 @@ class _EditProductPageState extends State<EditProductPage> {
                             hintText: '0',
                             contentPadding: EdgeInsets.symmetric(vertical: 12),
                             enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.black, width: 2.0),
+                              borderSide: BorderSide(
+                                color: Colors.black,
+                                width: 2.0,
+                              ),
                               borderRadius: BorderRadius.zero,
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.black, width: 4.0),
+                              borderSide: BorderSide(
+                                color: Colors.black,
+                                width: 4.0,
+                              ),
                               borderRadius: BorderRadius.zero,
                             ),
                           ),
@@ -469,9 +523,10 @@ class _EditProductPageState extends State<EditProductPage> {
                             final num = int.tryParse(val) ?? 0;
                             if (num < 0) {
                               _quantityController.text = '0';
-                              _quantityController.selection = TextSelection.fromPosition(
-                                const TextPosition(offset: 1),
-                              );
+                              _quantityController.selection =
+                                  TextSelection.fromPosition(
+                                    const TextPosition(offset: 1),
+                                  );
                             }
                           },
                         ),
@@ -486,10 +541,26 @@ class _EditProductPageState extends State<EditProductPage> {
                           ),
                           child: ColorFiltered(
                             colorFilter: const ColorFilter.matrix(<double>[
-                              0.2126, 0.7152, 0.0722, 0, 0,
-                              0.2126, 0.7152, 0.0722, 0, 0,
-                              0.2126, 0.7152, 0.0722, 0, 0,
-                              0,      0,      0,      1, 0,
+                              0.2126,
+                              0.7152,
+                              0.0722,
+                              0,
+                              0,
+                              0.2126,
+                              0.7152,
+                              0.0722,
+                              0,
+                              0,
+                              0.2126,
+                              0.7152,
+                              0.0722,
+                              0,
+                              0,
+                              0,
+                              0,
+                              0,
+                              1,
+                              0,
                             ]),
                             child: Image.network(
                               'https://lh3.googleusercontent.com/aida-public/AB6AXuBEeYmamUMUe3YacQDkRFGsq8_rnKiEqaSeMoeWyhggMCSLmhKloPTUtnK4k_VUG-GG1X0uA01-4sI__bINv8P1wNTBO4KewNZcYm8CzIT9m5O7wongoVhQdIXAHuklhyra--psKNN1cx_kSfwhxjUEATJyUIGeb7ol8hd9nsp33d5XQNBVSWt3xzicZKfTzl99WVYVoIGyOVr_-ZhdccTJvMJsOrCYAeEFYqJW2Koyf35unM_LWfA6ZWuSR665mixQ0WY34UXEr0js',
